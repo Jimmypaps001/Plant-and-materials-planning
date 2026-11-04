@@ -1,0 +1,325 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:{variety}-{farm}",
+ "creation": "2026-10-28 20:50:30.072676",
+ "description": "Living weekly demand register for one variety at one farm. Extended progressively so the horizon always reaches the target years ahead.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "identification_section",
+  "variety",
+  "farm",
+  "cb_ident",
+  "company",
+  "horizon_section",
+  "target_years_ahead",
+  "horizon_start",
+  "horizon_end",
+  "cb_horizon",
+  "weeks_covered",
+  "weeks_ahead_of_today",
+  "horizon_gap_weeks",
+  "horizon_status",
+  "totals_section",
+  "total_demand_stems",
+  "firm_demand_stems",
+  "cb_totals",
+  "peak_weekly_demand",
+  "average_weekly_demand",
+  "weeks_section",
+  "demand_weeks",
+  "calendar_section",
+  "calendar_html"
+ ],
+ "fields": [
+  {
+   "fieldname": "identification_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "variety",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Variety",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "farm",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Farm",
+   "options": "Farm",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cb_ident",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "horizon_section",
+   "fieldtype": "Section Break",
+   "label": "Rolling Horizon"
+  },
+  {
+   "default": "3",
+   "fieldname": "target_years_ahead",
+   "fieldtype": "Int",
+   "label": "Target Years Ahead",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "horizon_start",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Horizon Start",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "horizon_end",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Horizon End",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_horizon",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "weeks_covered",
+   "fieldtype": "Int",
+   "label": "Weeks Covered",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "weeks_ahead_of_today",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Weeks Ahead Of Today",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "horizon_gap_weeks",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Horizon Shortfall (weeks)",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "horizon_status",
+   "fieldtype": "Data",
+   "label": "Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "total_demand_stems",
+   "fieldtype": "Int",
+   "label": "Total Demand (stems)",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.firm_demand_stems",
+   "fieldname": "firm_demand_stems",
+   "fieldtype": "Int",
+   "label": "Firm Demand (stems)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "peak_weekly_demand",
+   "fieldtype": "Int",
+   "label": "Peak Weekly Demand",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "average_weekly_demand",
+   "fieldtype": "Float",
+   "label": "Average Weekly Demand",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "weeks_section",
+   "fieldtype": "Section Break",
+   "label": "Demand Weeks"
+  },
+  {
+   "fieldname": "demand_weeks",
+   "fieldtype": "Table",
+   "label": "Demand Weeks",
+   "options": "Summer Flower Demand Week"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "calendar_section",
+   "fieldtype": "Section Break",
+   "label": "Demand Calendar"
+  },
+  {
+   "fieldname": "calendar_html",
+   "fieldtype": "HTML",
+   "label": "Calendar"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "creation": "2026-11-03 00:00:00.000000",
+   "custom": 0,
+   "docstatus": 0,
+   "group": "Grow",
+   "hidden": 0,
+   "idx": 1,
+   "is_child_table": 0,
+   "link_doctype": "Crop Cycle",
+   "link_fieldname": "custom_market_demand",
+   "modified": "2026-11-03 00:00:00.000000",
+   "modified_by": "Administrator",
+   "owner": "Administrator",
+   "parent": "Summer Flower Market Demand",
+   "parent_doctype": null,
+   "parentfield": "links",
+   "parenttype": "DocType",
+   "table_fieldname": null
+  },
+  {
+   "creation": "2026-11-03 00:00:00.000000",
+   "custom": 0,
+   "docstatus": 0,
+   "group": "Plan",
+   "hidden": 0,
+   "idx": 2,
+   "is_child_table": 0,
+   "link_doctype": "Summer Flower Budget",
+   "link_fieldname": "market_demand",
+   "modified": "2026-11-03 00:00:00.000000",
+   "modified_by": "Administrator",
+   "owner": "Administrator",
+   "parent": "Summer Flower Market Demand",
+   "parent_doctype": null,
+   "parentfield": "links",
+   "parenttype": "DocType",
+   "table_fieldname": null
+  },
+  {
+   "creation": "2026-11-03 00:00:00.000000",
+   "custom": 0,
+   "docstatus": 0,
+   "group": "Plan",
+   "hidden": 0,
+   "idx": 3,
+   "is_child_table": 0,
+   "link_doctype": "Summer Flower Production Plan",
+   "link_fieldname": "market_demand",
+   "modified": "2026-11-03 00:00:00.000000",
+   "modified_by": "Administrator",
+   "owner": "Administrator",
+   "parent": "Summer Flower Market Demand",
+   "parent_doctype": null,
+   "parentfield": "links",
+   "parenttype": "DocType",
+   "table_fieldname": null
+  },
+  {
+   "creation": "2026-11-03 00:00:00.000000",
+   "custom": 0,
+   "docstatus": 0,
+   "group": "Raise",
+   "hidden": 0,
+   "idx": 4,
+   "is_child_table": 0,
+   "link_doctype": "Summer Flower Propagation Plan",
+   "link_fieldname": "market_demand",
+   "modified": "2026-11-03 00:00:00.000000",
+   "modified_by": "Administrator",
+   "owner": "Administrator",
+   "parent": "Summer Flower Market Demand",
+   "parent_doctype": null,
+   "parentfield": "links",
+   "parenttype": "DocType",
+   "table_fieldname": null
+  }
+ ],
+ "modified": "2026-10-28 20:30:00.000000",
+ "modified_by": "james@upande.com",
+ "module": "Upande Crop Material Planning",
+ "name": "Summer Flower Market Demand",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Agriculture Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Agriculture User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "variety,farm",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "variety",
+ "track_changes": 1
+}

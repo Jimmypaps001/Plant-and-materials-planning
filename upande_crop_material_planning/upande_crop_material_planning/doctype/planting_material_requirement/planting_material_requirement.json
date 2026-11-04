@@ -1,0 +1,253 @@
+{
+ "actions": [],
+ "creation": "2026-09-17 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "field_order": [
+  "line_type",
+  "cohort",
+  "planting_week",
+  "planting_date",
+  "first_harvest_week",
+  "column_break_a",
+  "qty_at_field",
+  "beds",
+  "capped",
+  "short_ordered",
+  "section_order",
+  "method",
+  "entry_stage",
+  "supplier",
+  "column_break_b",
+  "drawn_from_pool",
+  "qty_to_order",
+  "required_at_site_date",
+  "order_by_date",
+  "late",
+  "section_delivery",
+  "expected_delivery_date",
+  "delivery_confirmed",
+  "confirmed_qty",
+  "confirmed_delivery_week",
+  "actual_delivery_week",
+  "column_break_c",
+  "source_doctype",
+  "source_doc",
+  "source_row",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "line_type",
+   "fieldtype": "Select",
+   "label": "Line",
+   "options": "Planting\nEstablishment",
+   "default": "Planting",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "A Planting line is a cohort going in the ground. An Establishment line is the one purchase that builds a motherstock -- bought once for the whole plan, because a pool is cut from every week rather than consumed by a planting."
+  },
+  {
+   "fieldname": "cohort",
+   "fieldtype": "Data",
+   "label": "Cohort",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "planting_week",
+   "fieldtype": "Data",
+   "label": "Plant",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "planting_date",
+   "fieldtype": "Date",
+   "label": "Planting Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_harvest_week",
+   "fieldtype": "Data",
+   "label": "First Cut",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "qty_at_field",
+   "fieldtype": "Int",
+   "label": "Plants This Line Provides",
+   "in_list_view": 0,
+   "read_only": 1
+  },
+  {
+   "fieldname": "beds",
+   "fieldtype": "Int",
+   "label": "Beds",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "capped",
+   "fieldtype": "Check",
+   "label": "Trimmed to fit the ground",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_order",
+   "fieldtype": "Section Break",
+   "label": "Order"
+  },
+  {
+   "fieldname": "method",
+   "fieldtype": "Select",
+   "label": "Method",
+   "options": "\nPurchase\nPropagate",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "entry_stage",
+   "fieldtype": "Data",
+   "label": "Bought As",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "column_break_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "drawn_from_pool",
+   "fieldtype": "Check",
+   "label": "Cut from the motherstock",
+   "read_only": 1,
+   "description": "This cohort is stuck with cuttings off the standing motherstock, so there is nothing to buy for it. What it costs was bought on the Establishment line.",
+   "in_list_view": 0,
+   "hidden": 1
+  },
+  {
+   "fieldname": "qty_to_order",
+   "fieldtype": "Int",
+   "label": "To Buy",
+   "in_list_view": 1,
+   "description": "What is bought for this line. Zero on a planting that is stuck with cuttings off the motherstock -- tissue culture is bought once, on the Establishment line, and every planting after that takes cuttings from the pool it built. Nothing is bought again."
+  },
+  {
+   "fieldname": "required_at_site_date",
+   "fieldtype": "Date",
+   "label": "Needed at Site"
+  },
+  {
+   "fieldname": "order_by_date",
+   "fieldtype": "Date",
+   "label": "Order By",
+   "in_list_view": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "late",
+   "fieldtype": "Check",
+   "label": "Order date has passed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_delivery",
+   "fieldtype": "Section Break",
+   "label": "Delivery"
+  },
+  {
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Delivery Date",
+   "in_list_view": 1,
+   "description": "When the material is expected on the farm. Ordering on the order-by date lands it here."
+  },
+  {
+   "fieldname": "delivery_confirmed",
+   "fieldtype": "Check",
+   "label": "Confirmed",
+   "read_only": 1,
+   "description": "The supplier has answered for this delivery. Without it, a confirmed quantity of nothing cannot be told apart from a question nobody has answered."
+  },
+  {
+   "fieldname": "confirmed_qty",
+   "fieldtype": "Int",
+   "label": "Confirmed",
+   "read_only": 1,
+   "description": "What the supplier agreed to send for this delivery. Short of To Buy means fewer plants stand up that week."
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "confirmed_delivery_week",
+   "fieldtype": "Data",
+   "label": "Confirmed Week"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "actual_delivery_week",
+   "fieldtype": "Data",
+   "label": "Actual Week"
+  },
+  {
+   "fieldname": "column_break_c",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "source_doctype",
+   "fieldtype": "Link",
+   "label": "Raised As (type)",
+   "options": "DocType",
+   "hidden": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "source_doc",
+   "fieldtype": "Dynamic Link",
+   "label": "Raised As",
+   "options": "source_doctype"
+  },
+  {
+   "fieldname": "source_row",
+   "fieldtype": "Data",
+   "label": "Raised As (row)",
+   "read_only": 1,
+   "hidden": 1,
+   "description": "The request line this one became, so the order line that answers it can be found again."
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "short_ordered",
+   "fieldtype": "Check",
+   "label": "Short Ordered",
+   "read_only": 1,
+   "description": "The order did not stretch this far, so this planting is not fully supplied."
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-30 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Upande Crop Material Planning",
+ "name": "Planting Material Requirement",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": []
+}
