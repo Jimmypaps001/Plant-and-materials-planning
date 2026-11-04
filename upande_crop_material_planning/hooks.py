@@ -1,5 +1,5 @@
 app_name = "upande_crop_material_planning"
-app_title = "Upande Crop Material Planning"
+app_title = "Crop Material Planning"
 app_publisher = "Upande"
 app_description = "Crop material planning: production projections, forecasts, budgets and calibration from actuals (split from upande_agriculture)"
 app_email = "teddy@upande.com"
@@ -11,15 +11,14 @@ app_license = "mit"
 required_apps = ["upande_production"]
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "upande_crop_material_planning",
-# 		"logo": "/assets/upande_crop_material_planning/logo.png",
-# 		"title": "Upande Crop Material Planning",
-# 		"route": "/upande_crop_material_planning",
-# 		"has_permission": "upande_crop_material_planning.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "upande_crop_material_planning",
+		"logo": "/assets/upande_crop_material_planning/images/crop_material_planning_logo.svg",
+		"title": "Crop Material Planning",
+		"route": "/desk/crop-material-planning",
+	}
+]
 
 # Includes in <head>
 # ------------------
