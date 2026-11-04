@@ -88,7 +88,7 @@ class SummerFlowerProcurementPlan(Document):
 		if not stage or not self.protocol:
 			return cint(self.weeks_to_ground)
 		try:
-			from upande_crop_material_planning.summer_flowers import sourcing
+			sourcing = _shared.module('sourcing')
 
 			j = sourcing.journey(self.protocol, stage)
 			return cint(j["weeks_to_ground"]) if j else cint(self.weeks_to_ground)
@@ -1630,7 +1630,7 @@ def methods_for(production_plan):
 	"""
 	p = frappe.get_doc("Summer Flower Production Plan", production_plan)
 	v = frappe.get_cached_doc("Crop Protocol Version", p.protocol)
-	from upande_crop_material_planning.summer_flowers import sourcing
+	sourcing = _shared.module('sourcing')
 
 	options, seen = [], set()
 	for o in sourcing.entry_options(v.name):
@@ -1854,7 +1854,7 @@ def tc_options(production_plan, cycles=None, tc_qty=None):
 	"""
 	p = frappe.get_doc("Summer Flower Production Plan", production_plan)
 	v = frappe.get_cached_doc("Crop Protocol Version", p.protocol)
-	from upande_crop_material_planning.summer_flowers import sourcing
+	sourcing = _shared.module('sourcing')
 	tc_order_by_date = _shared.doctype_names('summer_flower_motherstock_batch', 'tc_order_by_date')
 
 	decided = sourcing.route_plan(v)
@@ -1968,7 +1968,7 @@ def build(production_plan, method=None, entry_stage=None, supplier=None,
 	if p.docstatus == 2:
 		frappe.throw(_("{0} is cancelled.").format(p.name))
 	v = frappe.get_cached_doc("Crop Protocol Version", p.protocol)
-	from upande_crop_material_planning.summer_flowers import sourcing
+	sourcing = _shared.module('sourcing')
 	TAKEN_STAGES = _shared.names('crop_protocol', 'TAKEN_STAGES')
 	from upande_crop_material_planning.upande_crop_material_planning.doctype.summer_flower_production_plan.summer_flower_production_plan import plants_per_bed_for
 

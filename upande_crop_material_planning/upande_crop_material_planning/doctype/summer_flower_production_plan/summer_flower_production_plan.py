@@ -14,7 +14,7 @@ from frappe.utils import (cint, flt, get_datetime, getdate, now_datetime,
 
 current_version = _shared.doctype_names('crop_protocol_version', 'current_version')
 RESERVING_STATES, production_by_week, refresh_coverage, standing_plantings = _shared.doctype_names('planting_calendar', 'RESERVING_STATES', 'production_by_week', 'refresh_coverage', 'standing_plantings')
-from upande_crop_material_planning.summer_flowers.cohort_solver import plan_cohorts
+plan_cohorts = _shared.names('cohort_solver', 'plan_cohorts')
 from upande_production.summer_flowers.planning import season_year, week_family_label, MONTH_NAMES, season_first_week, iso_monday, iso_year_week, week_sequence, weeks_between
 
 # Stop the greedy filler running away if a protocol is misconfigured.
@@ -539,7 +539,7 @@ class SummerFlowerProductionPlan(Document):
 		# the Procurement Plan raises orders against are the same walk. They were two
 		# walks: this one multiplied through the motherstock and the route-based one
 		# did not, and for the same Aster plan they said 3,024 plantlets and 136,851.
-		from upande_crop_material_planning.summer_flowers import sourcing
+		sourcing = _shared.module('sourcing')
 
 		cycles = cint(self.tc_cycles_committed) if self.tc_choice_committed \
 			else cint(v.max_multiplication_cycles)
@@ -1637,7 +1637,7 @@ def plan_preview(market_demand, farm=None, season_start_year=None):
 				beds, plants, _a = size_planting(v, plants_required, min_beds)
 			else:
 				beds = 0
-			from upande_crop_material_planning.summer_flowers import sourcing
+			sourcing = _shared.module('sourcing')
 
 			# None means this crop is not raised from tissue culture at all -- seed,
 			# tubers, budwood, plants bought ready. Advising a TC order for it was how

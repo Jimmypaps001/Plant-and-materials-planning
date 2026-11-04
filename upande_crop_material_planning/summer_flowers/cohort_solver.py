@@ -36,9 +36,10 @@ Of every planting programme that satisfies those, this takes the one that plants
 the fewest plants, because plants are what is bought.
 """
 
+from upande_crop_material_planning.summer_flowers import shared as _shared
 import math
 
-from upande_crop_material_planning.summer_flowers.simplex import minimise
+minimise = _shared.names('simplex', 'minimise')
 
 # Above this the tableau costs more than the answer is worth, so a long horizon
 # is solved a slice at a time, each slice seeing what the ones before it planted.

@@ -395,7 +395,7 @@ def _direct_derivation(dv, v, peak_plants):
 	and counted down the losses that route carries, which is the ladder the
 	material card shows week by week.
 	"""
-	from upande_crop_material_planning.summer_flowers import sourcing
+	sourcing = _shared.module('sourcing')
 	from upande_crop_material_planning.upande_crop_material_planning.doctype.summer_flower_production_plan.summer_flower_production_plan import plants_to_plant
 
 	entry = next((r.stage for r in (v.get("material_route") or [])
@@ -666,7 +666,7 @@ def _tc_production(plan_doc, version, tc_qty, order_date, divert_weeks=0,
 	date -- so with cuttings unlimited this reproduces the plan's stored numbers
 	rather than a second opinion about them.
 	"""
-	from upande_crop_material_planning.summer_flowers import lifecycle_sim as ls
+	ls = _shared.module('lifecycle_sim')
 
 	v = version
 	offsets = v.flush_offsets()
@@ -1598,7 +1598,7 @@ def simulate_lifecycle(version, tc_qty, order_date, num_cycles=None, to_prop_pct
 	the run covers the period being planned and no further.
 	"""
 	_guard()
-	from upande_crop_material_planning.summer_flowers import lifecycle_sim as ls
+	ls = _shared.module('lifecycle_sim')
 
 	if isinstance(farm_overrides, str):
 		farm_overrides = frappe.parse_json(farm_overrides or "{}")
@@ -2177,7 +2177,7 @@ def _route_chains_payload(version):
 		form = CHAIN_FORM.get(entry["stage"])
 		lifts = []
 		if form:
-			from upande_crop_material_planning.summer_flowers import tc_supply as ts
+			ts = _shared.module('tc_supply')
 
 			# The two halves as well as the total, because the week a lift
 			# reaches the farm is weeks on the trough plus rooting and the
@@ -2430,8 +2430,7 @@ def protocol_detail(version=None, variety=None, farm=None, plan=None):
 	ramp = [
 		{"week": i + 1, "pct": int(round(x * 100))}
 		for i, x in enumerate(
-			__import__("upande_crop_material_planning.summer_flowers.lifecycle_sim",
-			           fromlist=["parse_ramp"]).parse_ramp(v.ramp_profile, v.ramp_weeks))
+			_shared.module('lifecycle_sim').parse_ramp(v.ramp_profile, v.ramp_weeks))
 	]
 
 	sibling = frappe.get_all(

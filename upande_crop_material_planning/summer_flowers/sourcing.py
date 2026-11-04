@@ -329,7 +329,7 @@ def standing_pool_capacity(version, on_date):
 	"""
 	if not on_date:
 		return 0, []
-	from upande_crop_material_planning.summer_flowers.lifecycle_sim import ramp_ratio
+	ramp_ratio = _shared.names('lifecycle_sim', 'ramp_ratio')
 
 	per_week = flt(version.cuttings_per_plant_per_week) or 1.0
 	ramp = version.ramp_ratios() or [1.0]
