@@ -25,7 +25,13 @@ add_to_apps_screen = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/upande_crop_material_planning/css/upande_crop_material_planning.css"
-# app_include_js = "/assets/upande_crop_material_planning/js/upande_crop_material_planning.js"
+# The apps-screen tile's hover animation (swaps the tile's <img> for the inlined SVG).
+app_include_js = "/assets/upande_crop_material_planning/js/crop_material_planning_logo_motion.js"
+
+# The workspace home's tiled navigation block.
+fixtures = [
+	{"doctype": "Custom HTML Block", "filters": [["name", "in", ["Crop Material Planning Navigation"]]]},
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/upande_crop_material_planning/css/upande_crop_material_planning.css"

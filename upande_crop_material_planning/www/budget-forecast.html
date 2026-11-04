@@ -2756,6 +2756,9 @@ function applyPrefs() {
   const f = $("#t-focus"); if (f) f.classList.toggle("on", !!PREFS.focus);
   const st = $("#t-sort");
   if (st) st.dataset.tip = "Sort: " + { greenhouse: "Greenhouse", variety: "Variety", size: "Largest" }[SORT];
+  // /budget-forecast#calibrate (or #budget, #forecast ...) opens that view directly.
+  const hv = (location.hash || "").slice(1);
+  if (hv && document.querySelector('.snav[data-view="' + hv.replace(/[^a-z-]/g, "") + '"]')) PREFS.view = hv;
   applyView(PREFS.view || "forecast");
   applyWidths();
   syncTitle();
