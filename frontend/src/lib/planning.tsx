@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { gridPayload, isError, type Block, type GridPayload } from "@/lib/api";
+import { getList, gridPayload, isError, type Block, type GridPayload } from "@/lib/api";
 import { currentIsoWeek, shiftWeek, type IsoWeek } from "@/lib/weeks";
 import type { TreeNode } from "@/components/TreePicker";
 import { inCrop, useCropMap, type CropMap } from "@/lib/crops";
@@ -15,10 +15,13 @@ interface Prefs {
   span: number;
 }
 
+let stored = false;
 function loadPrefs(): Prefs {
   const base: Prefs = { year: new Date().getFullYear(), src: "manual", span: 11 };
   try {
-    return { ...base, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
+    const raw = localStorage.getItem(KEY);
+    stored = !!raw;
+    return { ...base, ...JSON.parse(raw || "{}") };
   } catch {
     return base;
   }
@@ -43,6 +46,8 @@ export interface PlanningState {
   crop: string;
   setCrop: (c: string) => void;
   cropMap: CropMap;
+  /** An Item code as its item_name (the code when the Item is unknown): what every label shows. */
+  nameOf: (code: string | null | undefined) => string;
   /** Whether a variety (Item code) belongs to the open crop. */
   inOpenCrop: (variety: string) => boolean;
   /** Blocks the crop and the greenhouse/variety filter let through. */
@@ -76,6 +81,13 @@ export function PlanningProvider({
   children: React.ReactNode;
 }) {
   const cropMap = useCropMap();
+  const [names, setNames] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    void getList<{ name: string; item_name: string | null }>("Item", ["name", "item_name"]).then((r) => {
+      if (!isError(r)) setNames(new Map((r as { name: string; item_name: string | null }[]).map((i) => [i.name, i.item_name || i.name])));
+    });
+  }, []);
+  const nameOf = useCallback((code: string | null | undefined) => (code ? names.get(code) ?? code : ""), [names]);
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [start, setStart] = useState<IsoWeek | null>(null);
   const [payload, setPayload] = useState<GridPayload | null>(null);
@@ -116,7 +128,14 @@ export function PlanningProvider({
         return;
       }
       setError(null);
-      setPayload(r as GridPayload);
+      const p0 = r as GridPayload;
+      // Nothing typed on Production Forecast and never chosen: show the model, where the budget is.
+      if (p0.mode === "manual" && !stored && !p0.budget_total && !p0.forecast_total) {
+        stored = true;
+        save({ ...prefs, src: "automated" });
+        return;
+      }
+      setPayload(p0);
       if (!start && r && (r as GridPayload).weeks.length) {
         const p = r as GridPayload;
         setStart({ year: p.week_years[0] ?? p.year, week: p.weeks[0] });
@@ -135,9 +154,9 @@ export function PlanningProvider({
       label: house(gh),
       search: gh,
       count: list.length,
-      children: list.map((b) => ({ id: b.key, label: b.variety, search: `${gh} ${b.variety}` })),
+      children: list.map((b) => ({ id: b.key, label: nameOf(b.variety), search: `${gh} ${b.variety} ${nameOf(b.variety)}` })),
     }));
-  }, [cropBlocks]);
+  }, [cropBlocks, nameOf]);
 
   // Until the user touches the picker, everything is in.
   const allLeaves = useMemo(() => new Set(cropBlocks.map((b) => b.key)), [cropBlocks]);
@@ -167,6 +186,7 @@ export function PlanningProvider({
     setCrop: onCrop,
     cropMap,
     inOpenCrop,
+    nameOf,
     blocks,
     tree,
     checked: effective,

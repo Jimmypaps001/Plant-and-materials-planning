@@ -81,7 +81,7 @@ function Panel({ title, note, children, className }: { title: string; note?: str
 }
 
 function BudgetTab() {
-  const { payload, blocks, loading, error } = usePlanning();
+  const { payload, blocks, loading, error, nameOf } = usePlanning();
   const s = useMemo(() => (payload ? summarise(payload, blocks) : null), [payload, blocks]);
   if (!payload || !s) return loading ? <PageSkeleton /> : <p className="text-[13px] text-[var(--sd-muted)]">{error ?? "No data."}</p>;
   if (!blocks.length)
@@ -92,18 +92,31 @@ function BudgetTab() {
   const curve = payload.months.map((m, i) => ({ month: m, budget: s.bud[i], actual: s.act[i] }));
   const peak = s.bud.indexOf(Math.max(...s.bud));
 
-  const byVariety = Object.entries(
+  const byVarietyAll = Object.entries(
     blocks.reduce<Record<string, number>>((a, b) => ({ ...a, [b.variety]: (a[b.variety] || 0) + b.budget_total }), {}),
   )
     .filter(([, v]) => v > 0)
     .sort((a, b) => b[1] - a[1]);
+  const byVariety = byVarietyAll;
 
-  const houses = [...new Set(blocks.map((b) => b.greenhouse))];
-  const varsInHouses = [...new Set(blocks.map((b) => b.variety))];
-  const split = houses.map((h) => ({
-    house: house(h),
-    ...Object.fromEntries(varsInHouses.map((v) => [v, blocks.filter((b) => b.greenhouse === h && b.variety === v).reduce((t, b) => t + b.budget_total, 0)])),
-  }));
+  // A farm can have hundreds of blocks: chart the 20 biggest, and the 8 biggest varieties plus "Other".
+  const allHouses = [...new Set(blocks.map((b) => b.greenhouse))];
+  const houseTotal = (h: string) => blocks.filter((b) => b.greenhouse === h).reduce((t, b) => t + b.budget_total, 0);
+  const houses = allHouses.sort((a, b) => houseTotal(b) - houseTotal(a)).slice(0, 20);
+  const topVars = byVariety.slice(0, 8).map(([v]) => v);
+  const varsInHouses = byVariety.length > 8 ? [...topVars, "__other__"] : topVars;
+  const split = houses.map((h) => {
+    const mine = blocks.filter((b) => b.greenhouse === h);
+    return {
+      house: house(h),
+      ...Object.fromEntries(
+        varsInHouses.map((v) => [
+          v,
+          mine.filter((b) => (v === "__other__" ? !topVars.includes(b.variety) : b.variety === v)).reduce((t, b) => t + b.budget_total, 0),
+        ]),
+      ),
+    };
+  });
 
   const gradeTotals = Object.entries(
     blocks.reduce<Record<string, number>>((a, b) => {
@@ -136,7 +149,7 @@ function BudgetTab() {
         <Card>
           <CardContent className="pt-5 text-[12px] text-[var(--sd-muted)]">
             <b className="text-[var(--sd-ink)]">Harvested with no crop cycle: </b>
-            {payload.unassigned_actuals.slice(0, 6).map((u) => `${u.variety} @ ${house(u.greenhouse)} — ${fmtN(u.stems)}`).join(" · ")}
+            {payload.unassigned_actuals.slice(0, 6).map((u) => `${nameOf(u.variety)} @ ${house(u.greenhouse)} — ${fmtN(u.stems)}`).join(" · ")}
             {payload.unassigned_actuals.length > 6 ? " · …" : ""} — plant these as crop cycles so their actuals join the budget.
           </CardContent>
         </Card>
@@ -165,14 +178,14 @@ function BudgetTab() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Variety mix" note={`${byVariety.length} of ${new Set(allVar).size} varieties budgeted`}>
-          <div style={{ height: Math.max(160, byVariety.length * 26) }}>
+          <div style={{ height: Math.max(160, Math.min(byVariety.length, 15) * 30) }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byVariety.map(([v, n]) => ({ v, n }))} layout="vertical" margin={{ left: 8, right: 16 }}>
+              <BarChart data={byVariety.slice(0, 15).map(([v, n]) => ({ v: nameOf(v), n }))} layout="vertical" margin={{ left: 8, right: 16 }}>
                 <XAxis type="number" hide />
-                <YAxis type="category" dataKey="v" tick={AXIS} axisLine={false} tickLine={false} width={110} />
+                <YAxis type="category" dataKey="v" tick={AXIS} axisLine={false} tickLine={false} width={150} interval={0} tickFormatter={(s: string) => (s.length > 24 ? s.slice(0, 23) + "…" : s)} />
                 <RTooltip formatter={(v: number) => fmtN(v)} />
                 <Bar dataKey="n" name="Stems" radius={4}>
-                  {byVariety.map(([v]) => <Cell key={v} fill={colourFor(allVar, v)} />)}
+                  {byVariety.slice(0, 15).map(([v]) => <Cell key={v} fill={colourFor(allVar, v)} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -196,14 +209,14 @@ function BudgetTab() {
         </Panel>
       </div>
 
-      <Panel title="Greenhouses" note={`${houses.length} of ${new Set(payload.blocks.map((b) => b.greenhouse)).size} budgeted, split by variety`}>
-        <div style={{ height: Math.max(180, houses.length * 28) }}>
+      <Panel title="Greenhouses" note={`top ${houses.length} of ${allHouses.length} by budget, split by variety`}>
+        <div style={{ height: Math.max(180, houses.length * 30) }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={split} layout="vertical" margin={{ left: 8, right: 16 }}>
               <XAxis type="number" hide />
-              <YAxis type="category" dataKey="house" tick={AXIS} axisLine={false} tickLine={false} width={70} />
+              <YAxis type="category" dataKey="house" tick={AXIS} axisLine={false} tickLine={false} width={150} interval={0} tickFormatter={(s: string) => (s.length > 24 ? s.slice(0, 23) + "…" : s)} />
               <RTooltip formatter={(v: number) => fmtN(v)} />
-              {varsInHouses.map((v) => <Bar key={v} dataKey={v} stackId="s" fill={colourFor(allVar, v)} />)}
+              {varsInHouses.map((v) => <Bar key={v} dataKey={v} name={v === "__other__" ? "Other varieties" : nameOf(v)} stackId="s" fill={v === "__other__" ? "var(--sd-series-5)" : colourFor(allVar, v)} />)}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -221,7 +234,7 @@ function BudgetTab() {
             {top.map((b) => (
               <tr key={b.key} className="border-t border-[var(--sd-line-soft)] tabular-nums">
                 <td className="py-1.5">{house(b.greenhouse)}</td>
-                <td>{b.variety}</td>
+                <td title={`Item ${b.variety}`}>{nameOf(b.variety)}</td>
                 <td className="text-right">{b.area ? fmtN(Math.round(b.area)) : "—"}</td>
                 <td className="text-right">{fmtN(b.rate)}</td>
                 <td className="text-right font-semibold">{fmtN(b.budget_total)}</td>

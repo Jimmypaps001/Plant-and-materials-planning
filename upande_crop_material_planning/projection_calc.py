@@ -106,9 +106,72 @@ def cycle_weekly_stems(
     that repeats every year. Same shape out, different model, picked by the
     protocol's Crop Type.
     """
-    if protocol.get("crop_type") == "Summer Flower":
+    # The farm's own week-by-week targets on the cycle are the plan: use them as they stand.
+    targets = cycle.get("weekly_targets")
+    if targets:
+        return _targets_weekly_stems(targets, rule)
+    if is_summer_flower(protocol):
+        if _flushes_lack_offsets(protocol):
+            return _flush_life_stems(cycle, protocol, seasonal_factors, rule)
         return _flush_weekly_stems(cycle, protocol, seasonal_factors, rule)
     return _rose_weekly_stems(cycle, protocol, seasonal_factors, rule)
+
+
+def is_summer_flower(protocol: dict) -> bool:
+    """Crop Type is a link to a crop-type record ("Summer Flowers" on live, "Summer Flower" in older data);
+    the live protocols also carry an explicit flag."""
+    return bool(protocol.get("custom_is_summer_flower")) or str(protocol.get("crop_type") or "").startswith("Summer Flower")
+
+
+def _targets_weekly_stems(targets, rule: str | None = None) -> dict[tuple[int, int], float]:
+    """targets: [(week start date, stems)] rows from the cycle's own weekly targets, summed per calendar week."""
+    out: dict[tuple[int, int], float] = {}
+    for d, stems in targets:
+        if d and stems and stems > 0:
+            key = iso_week_key(d, rule)
+            out[key] = out.get(key, 0.0) + float(stems)
+    return out
+
+
+def _flushes_lack_offsets(protocol: dict) -> bool:
+    """Live flush schedules name each flush and its stems per plant but leave every week offset at 0; the
+    timing is in the protocol's first-harvest offset and flushes per year."""
+    rows = protocol.get("flush_schedule") or []
+    return (
+        len(rows) > 1
+        and not any(int(r.get("weeks_after_first_flush") or 0) for r in rows)
+        and int(protocol.get("custom_sf_first_harvest_offset_weeks") or 0) > 0
+        and float(protocol.get("custom_sf_flushes_per_year") or 0) > 0
+    )
+
+
+def _flush_life_stems(
+    cycle: dict,
+    protocol: dict,
+    seasonal_factors: dict[int, float] | None = None,
+    rule: str | None = None,
+) -> dict[tuple[int, int], float]:
+    """Flushes in order, one every 52 / flushes-per-year weeks, the first at the protocol's first-harvest
+    offset. The schedule is the block's whole life, so it is played once (not replayed each year)."""
+    seasonal_factors = seasonal_factors or {}
+    plants = int(cycle.get("qty_planted") or 0)
+    planting = cycle.get("planting_date")
+    if plants <= 0 or not planting:
+        return {}
+    first = planting + datetime.timedelta(weeks=int(protocol["custom_sf_first_harvest_offset_weeks"]))
+    gap = max(1, round(WEEKS_PER_YEAR / float(protocol["custom_sf_flushes_per_year"])))
+    end = production_end(cycle, protocol)
+    reject = float(protocol.get("reject_pct") or 0) / 100.0
+    out: dict[tuple[int, int], float] = {}
+    for i, row in enumerate(sorted(protocol["flush_schedule"], key=lambda r: r.get("flush_number") or 0)):
+        d = first + datetime.timedelta(weeks=gap * i)
+        if end and d > end:
+            break
+        stems = plants * float(row.get("stems_per_plant") or 0) * (1 - reject)
+        if stems > 0:
+            key = iso_week_key(d, rule)
+            out[key] = out.get(key, 0.0) + stems * seasonal_factors.get(d.month, 1.0)
+    return out
 
 
 def _rose_weekly_stems(

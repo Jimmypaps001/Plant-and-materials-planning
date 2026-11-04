@@ -37,6 +37,10 @@ PROTOCOL_FIELDS = (
     "weeks_to_first_flush",
     "reject_pct",
     "productive_life_weeks",
+    # live Summer Flowers protocols (None where the site lacks the custom fields)
+    "custom_is_summer_flower",
+    "custom_sf_first_harvest_offset_weeks",
+    "custom_sf_flushes_per_year",
 )
 
 CYCLE_FIELDS = (
@@ -75,6 +79,31 @@ def _protocol_dict(name: str | None) -> dict | None:
         for r in (doc.flush_schedule or [])
     ]
     return out
+
+
+def house_of(cycle: dict) -> str:
+    """greenhouse, else the block, else the farm: what a cycle is grouped and labelled by."""
+    return cycle.get("greenhouse") or cycle.get("custom_block") or cycle.get("farm") or ""
+
+
+def _attach_weekly_targets(cycles: list[dict], rule: str | None = None) -> None:
+    """The farm's own per-week targets (Crop Cycle Weekly Target) become the cycle's plan, where it has any."""
+    if not cycles or not frappe.db.exists("DocType", "Crop Cycle Weekly Target"):
+        return
+    names = [c["name"] for c in cycles]
+    by: dict[str, list] = {}
+    for r in frappe.db.get_all(
+        "Crop Cycle Weekly Target",
+        filters={"parent": ("in", names), "parenttype": "Crop Cycle"},
+        fields=["parent", "week_start_date", "expected_stems", "target_stems"],
+        limit_page_length=0,
+    ):
+        stems = r.expected_stems or r.target_stems or 0
+        if r.week_start_date and stems:
+            by.setdefault(r.parent, []).append((getdate(r.week_start_date), int(stems)))
+    for c in cycles:
+        if by.get(c["name"]):
+            c["weekly_targets"] = by[c["name"]]
 
 
 def _resolve_protocol(cycle: dict) -> dict | None:
@@ -481,14 +510,21 @@ def grid_payload(year: int | None = None, start_year=None, start_week=None,
     week_years = [y for y, _ in pairs]
     span_years = sorted({y for y, _ in pairs})
 
+    cc_meta = frappe.get_meta("Crop Cycle")
+    # Block-based sites (live Margin Par) leave `greenhouse` empty and name the block and farm instead.
+    block_fields = [f for f in ("farm", "custom_block") if cc_meta.has_field(f)]
     cycles = frappe.db.get_all(
         "Crop Cycle",
         filters={"status": ("!=", "Ended")},
         # The model needs the dates too — without planting_date every block
         # silently budgets zero.
-        fields=list(CYCLE_FIELDS) + ["planted_area"],
+        fields=list(CYCLE_FIELDS) + ["planted_area"] + block_fields,
         order_by="greenhouse asc, variety asc",
     )
+    for c in cycles:
+        # What the grid groups and labels by: the greenhouse, else the block, else the farm.
+        c["house"] = house_of(c)
+    _attach_weekly_targets(cycles, rule)
 
     from upande_crop_material_planning.controllers import _seasonal_factor_map
 
@@ -498,7 +534,7 @@ def grid_payload(year: int | None = None, start_year=None, start_week=None,
 
     # THE fix: the grid used to hardcode revised=[None]*n, so every number a
     # planner typed was saved and then never read back.
-    _pairs = [(c["greenhouse"], c["variety"], year) for c in cycles]
+    _pairs = [(c["greenhouse"], c["variety"], year) for c in cycles if c["greenhouse"]]
     # Revised Forecast lives on Production Forecast, same as the Production
     # Budget mb reads below -- Automated must show the live model untouched
     # by anything a human typed there, not just its budget line.
@@ -513,7 +549,8 @@ def grid_payload(year: int | None = None, start_year=None, start_week=None,
         # or attach actuals to, so they'd only render as empty "None" blocks.
         if not c.get("variety"):
             continue
-        proto = _resolve_protocol(c)
+        # A cycle with the farm's own weekly targets needs no protocol to be budgeted.
+        proto = _resolve_protocol(c) or ({"targets_only": True} if c.get("weekly_targets") else None)
         sf = _seasonal_for(c["variety"])
         by_year = ({y: build_budget_year([(c, proto)], y, sf) for y in span_years}
                    if proto else {})
@@ -556,7 +593,9 @@ def grid_payload(year: int | None = None, start_year=None, start_week=None,
 
         blocks.append({
             "key": c["name"],
-            "greenhouse": c["greenhouse"],
+            "greenhouse": c["house"],
+            "farm": c.get("farm"),
+            "block_based": not c["greenhouse"],
             "variety": c["variety"],
             "area": c.get("planted_area") or 0,
             "rate": round(annual / c["planted_area"]) if c.get("planted_area") and annual else None,
@@ -567,7 +606,11 @@ def grid_payload(year: int | None = None, start_year=None, start_week=None,
                 # A whole-week override sits above the grade rows.
                 "revised": rev_of("all"),
                 "budget": per_week,
-                "actual": _actual_series(c["greenhouse"], c["variety"], pairs),
+                # Harvest is booked to warehouses; a block-based cycle has none, so there is nothing to
+                # attribute to it block by block (showing the variety's whole harvest on each would
+                # count it once per block).
+                "actual": ([None] * len(pairs) if not c["greenhouse"]
+                           else _actual_series(c["greenhouse"], c["variety"], pairs)),
             },
             "monthly": {
                 "grades": [{"grade": g["grade"],
@@ -575,7 +618,8 @@ def grid_payload(year: int | None = None, start_year=None, start_week=None,
                             "revised": [None] * 12} for g in grades],
                 "revised": month_rev,
                 "budget": [round(annual * w) for w in MONTH_WEIGHT],
-                "actual": _monthly_actual(c["greenhouse"], c["variety"], year),
+                "actual": ([None] * 12 if not c["greenhouse"]
+                           else _monthly_actual(c["greenhouse"], c["variety"], year)),
             },
             "lifetime": _lifetime(c, proto, mix, grades),
         })
@@ -622,13 +666,15 @@ def grid_payload(year: int | None = None, start_year=None, start_week=None,
         as_dict=True,
     )
     covered = {(base_variety(b["variety"]).upper(), b["greenhouse"]) for b in blocks}
+    # Block-based blocks have no warehouse to match, so a harvest is covered when its variety has a block.
+    block_varieties = {base_variety(b["variety"]).upper() for b in blocks if b.get("block_based")}
     unassigned: dict[tuple, int] = {}
     actual_total = week_actual_total = 0
     for r in harvest_rows:
         actual_total += int(r.stems or 0)
         week_actual_total += int(r.week_stems or 0)
         key = (base_variety(r.variety or "").upper(), r.greenhouse)
-        if key not in covered:
+        if key not in covered and key[0] not in block_varieties:
             uk = (base_variety(r.variety or ""), r.greenhouse)
             unassigned[uk] = unassigned.get(uk, 0) + int(r.stems or 0)
 
@@ -774,6 +820,8 @@ def set_forecast_cell(block: str, grade: str, week: int, value: int,
     if not cycle:
         frappe.throw(_("Crop Cycle {0} not found.").format(block))
     year = int(year or getdate(frappe.utils.nowdate()).year)
+    if not cycle.greenhouse:
+        frappe.throw(_("{0} is block-based (no greenhouse), and a forecast revision is kept per greenhouse.").format(block))
 
     name = frappe.db.get_value("Production Forecast", {
         "greenhouse": cycle.greenhouse, "variety": cycle.variety,
@@ -1179,6 +1227,8 @@ def set_budget_cell(block: str, month: str, value: int, grade: str | None = None
     cycle = frappe.db.get_value("Crop Cycle", block, ["greenhouse", "variety"], as_dict=True)
     if not cycle:
         frappe.throw(_("Crop Cycle {0} not found.").format(block))
+    if not cycle.greenhouse:
+        frappe.throw(_("{0} is block-based (no greenhouse), and a budget override is kept per greenhouse.").format(block))
 
     today = getdate(frappe.utils.nowdate())
     # Sep-Aug: months before September belong to the following calendar year.

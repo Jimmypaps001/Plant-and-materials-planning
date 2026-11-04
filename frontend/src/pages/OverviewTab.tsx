@@ -25,7 +25,7 @@ function by<T>(rows: T[], key: (r: T) => string, val: (r: T) => number) {
 
 /** Production overview (legacy Dashboard tab): area, plants and plantings across every farm, from Crop Cycle and Greenhouse. */
 export function OverviewTab() {
-  const { inOpenCrop } = usePlanning();
+  const { inOpenCrop, nameOf } = usePlanning();
   const [ghs, setGhs] = useState<Gh[] | null>(null);
   const [ccs, setCcs] = useState<Cycle[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -56,9 +56,9 @@ export function OverviewTab() {
         (!gh || c.greenhouse === gh) &&
         (!variety || c.variety === variety) &&
         (!year || (c.planting_date ?? "").startsWith(year)) &&
-        (!needle || `${c.greenhouse} ${c.variety} ${c.name}`.toLowerCase().includes(needle)),
+        (!needle || `${c.greenhouse} ${c.variety} ${nameOf(c.variety)} ${c.name}`.toLowerCase().includes(needle)),
     );
-  }, [ccs, farm, gh, variety, year, q, inOpenCrop]);
+  }, [ccs, farm, gh, variety, year, q, inOpenCrop, nameOf]);
 
   if (err) return <p className="text-[13px] text-[var(--sd-muted)]">Could not load Crop Cycle / Greenhouse data: {err}</p>;
   if (!ghs || !ccs) return <PageSkeleton />;
@@ -71,7 +71,7 @@ export function OverviewTab() {
   const dirty = !!(farm || gh || variety || year || q);
 
   const byFarm = by(active, (c) => c.farm ?? "", (c) => c.planted_area || 0);
-  const topVar = by(active, (c) => c.variety, (c) => c.plants_standing || 0).slice(0, 10);
+  const topVar = by(active, (c) => nameOf(c.variety), (c) => c.plants_standing || 0).slice(0, 10);
   const status = by(rows, (c) => c.status, () => 1);
   const byYear = by(rows, (c) => (c.planting_date ?? "").slice(0, 4), () => 1).sort((a, b) => a.k.localeCompare(b.k));
   const table = by(active, (c) => c.greenhouse, (c) => c.plants_standing || 0).map((r) => {
@@ -84,7 +84,7 @@ export function OverviewTab() {
       <div className="flex flex-wrap items-center gap-2">
         <FilterSelect label="Farm" value={farm} onChange={setFarm} options={uniq((c) => c.farm)} allLabel="All farms" />
         <FilterSelect label="Greenhouse" value={gh} onChange={setGh} options={uniq((c) => c.greenhouse)} allLabel="All greenhouses" />
-        <FilterSelect label="Variety" value={variety} onChange={setVariety} options={uniq((c) => c.variety)} allLabel="All varieties" />
+        <FilterSelect label="Variety" value={variety} onChange={setVariety} options={uniq((c) => c.variety).map((v) => ({ value: v, label: nameOf(v) }))} allLabel="All varieties" />
         <FilterSelect label="Planting year" value={year} onChange={setYear} options={uniq((c) => (c.planting_date ?? "").slice(0, 4)).reverse()} allLabel="All years" />
         <SearchInput value={q} onChange={setQ} placeholder="greenhouse, variety, cycle…" className="w-56" />
         <ClearFiltersPill active={dirty} onClear={() => { setFarm(""); setGh(""); setVariety(""); setYear(""); setQ(""); }} />

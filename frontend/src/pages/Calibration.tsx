@@ -16,8 +16,7 @@ interface Protocol { grade_mix?: { length_cm: number; pct: number; source: strin
 
 /** Calibration: read harvest actuals back against the Crop Protocol (budget.calibrate_variety). Applying only rewrites the measured grade mix. */
 export function Calibration() {
-  const { payload, blocks: cropBlocks, inOpenCrop } = usePlanning();
-  void inOpenCrop;
+  const { payload, blocks: cropBlocks, nameOf } = usePlanning();
   const toast = useToast();
   const varieties = useMemo(() => [...new Set(cropBlocks.map((b) => b.variety))].sort(), [cropBlocks]);
   const houses = useMemo(() => [...new Set(cropBlocks.map((b) => b.greenhouse))].sort(), [cropBlocks]);
@@ -68,7 +67,7 @@ export function Calibration() {
       actions={
         <>
           <CropFilter />
-          <FilterSelect label="Variety" value={variety} onChange={setVariety} options={varieties} />
+          <FilterSelect label="Variety" value={variety} onChange={setVariety} options={varieties.map((v) => ({ value: v, label: nameOf(v) }))} />
           <FilterSelect label="Greenhouse" value={gh} onChange={setGh} options={houses} allLabel="All greenhouses" format={house} />
           <ToolbarButton disabled={busy || !res || !Object.keys(res.grade_mix).length || !res.protocol} onClick={() => window.confirm(`Replace the measured grade mix on ${res?.protocol}?\n\nManual rows are kept.`) && void run(1)}>
             Apply grade mix

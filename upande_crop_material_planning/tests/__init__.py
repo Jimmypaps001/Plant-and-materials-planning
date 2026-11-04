@@ -114,3 +114,10 @@ def make_warehouse(name: str, supervisor: str | None = None) -> str:
     if supervisor and doc.meta.has_field("custom_supervisor"):
         doc.custom_supervisor = supervisor
     return doc.insert(ignore_permissions=True).name
+
+
+def cycle_extras() -> dict:
+    """Fields a live-schema site makes mandatory on a Crop Cycle (absent on a plain site)."""
+    import frappe
+
+    return {"custom_cycle_scope": "Greenhouse"} if frappe.get_meta("Crop Cycle").has_field("custom_cycle_scope") else {}

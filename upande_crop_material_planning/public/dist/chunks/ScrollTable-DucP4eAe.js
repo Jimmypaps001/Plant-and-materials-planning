@@ -1,0 +1,1 @@
+import{j as r,m as t}from"../planning-Bb4u8NJA.js";function n({children:a,tall:s,className:o}){return r.jsx("div",{className:t("overflow-auto",s?"max-h-[min(68vh,620px)]":"max-h-[min(52vh,440px)]",o),children:a})}const x="sticky top-0 z-10 bg-[var(--sd-card)] shadow-[0_1px_0_0_var(--sd-line)]";export{n as S,x as a};

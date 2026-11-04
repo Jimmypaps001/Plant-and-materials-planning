@@ -31,7 +31,7 @@ const FIELDS = ["name", "protocol_name", "variety_item", "crop_type", "weeks_to_
 
 /** Crop Protocols: the yield model every budget is built from. Read here; edit on the desk form. */
 export function Protocols() {
-  const { inOpenCrop } = usePlanning();
+  const { inOpenCrop, nameOf } = usePlanning();
   const [rows, setRows] = useState<Proto[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -43,7 +43,7 @@ export function Protocols() {
     void getList<Proto>("Crop Protocol", FIELDS, { order_by: "modified desc" }).then((r) => (isError(r) ? setErr(r.error) : setRows(r as Proto[])));
   }, [nonce]);
 
-  const shown = useMemo(() => (rows ?? []).filter((r) => inOpenCrop(r.variety_item ?? "") && (!q.trim() || `${r.protocol_name} ${r.variety_item} ${r.crop_type}`.toLowerCase().includes(q.trim().toLowerCase()))), [rows, q, inOpenCrop]);
+  const shown = useMemo(() => (rows ?? []).filter((r) => inOpenCrop(r.variety_item ?? "") && (!q.trim() || `${r.protocol_name} ${r.variety_item} ${nameOf(r.variety_item)} ${r.crop_type}`.toLowerCase().includes(q.trim().toLowerCase()))), [rows, q, inOpenCrop, nameOf]);
   const num = (n: number | null | undefined) => (n == null ? "—" : Number(n).toLocaleString("en-US"));
   const head = "py-2 px-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--sd-quiet)]";
 
@@ -72,7 +72,7 @@ export function Protocols() {
                 {shown.map((r) => (
                   <tr key={r.name} className="cursor-pointer border-t border-[var(--sd-line-soft)] tabular-nums hover:bg-[var(--sd-bg-soft)]" onClick={() => void getDoc<ProtoDoc>("Crop Protocol", r.name).then((d) => setOpen(isError(d) ? { ...r } : (d as ProtoDoc)))}>
                     <td className="px-3 py-2 font-medium text-[var(--sd-ink)]">{r.protocol_name || r.name}</td>
-                    <td className="px-3">{r.variety_item ?? "—"}</td>
+                    <td className="px-3" title={r.variety_item ? `Item ${r.variety_item}` : undefined}>{r.variety_item ? nameOf(r.variety_item) : "—"}</td>
                     <td className="px-3">{r.crop_type ?? "—"}</td>
                     <td className="px-3 text-right">{num(r.weeks_to_first_bending)}</td>
                     <td className="px-3 text-right">{num(r.weeks_between_cuts)}</td>
@@ -96,7 +96,7 @@ export function Protocols() {
             <>
               <DialogHeader>
                 <DialogTitle>{open.protocol_name || open.name}</DialogTitle>
-                <DialogDescription>{open.variety_item ?? "No variety linked"} · {open.crop_type ?? "—"}</DialogDescription>
+                <DialogDescription>{open.variety_item ? `${nameOf(open.variety_item)} (Item ${open.variety_item})` : "No variety linked"} · {open.crop_type ?? "—"}</DialogDescription>
               </DialogHeader>
               <div>
                 <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--sd-quiet)]">Grade mix</div>

@@ -6,7 +6,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from upande_crop_material_planning import budget
-from upande_crop_material_planning.tests import default_uom, make_warehouse
+from upande_crop_material_planning.tests import cycle_extras, default_uom, make_warehouse
 
 
 class _BudgetFixture:
@@ -20,7 +20,7 @@ class _BudgetFixture:
         if not frappe.db.exists("Item", self.VARIETY):
             frappe.get_doc({
                 "doctype": "Item", "item_code": self.VARIETY,
-                "item_name": self.VARIETY, "item_group": "All Item Groups",
+                "item_name": self.VARIETY, "item_group": "All Item Groups", "is_stock_item": 1,
                 "stock_uom": default_uom(),
             }).insert(ignore_permissions=True, ignore_mandatory=True)
         self.proto = self._protocol()
@@ -29,6 +29,7 @@ class _BudgetFixture:
 
     def _protocol(self, name="TEST-BUDGET-PROTO"):
         values = {
+            "crop_type": "Roses", "variety": self.VARIETY,
             "variety_item": self.VARIETY,
             "weeks_to_first_bending": 5, "weeks_to_second_bending": 5,
             "weeks_between_cuts": 7, "stems_per_plant_first_harvest": 0.7,
@@ -42,7 +43,7 @@ class _BudgetFixture:
             return d.name
         return frappe.get_doc({
             "doctype": "Crop Protocol", "protocol_name": name, **values,
-        }).insert(ignore_permissions=True).name
+        }).insert(ignore_permissions=True, set_name=name).name
 
     def _cycle(self, qty=10000, planting=datetime.date(2026, 1, 5)):
         existing = frappe.db.get_value("Crop Cycle", {
@@ -51,7 +52,7 @@ class _BudgetFixture:
         if existing:
             return frappe.get_doc("Crop Cycle", existing)
         return frappe.get_doc({
-            "doctype": "Crop Cycle", "greenhouse": self.house,
+            "doctype": "Crop Cycle", **cycle_extras(), "greenhouse": self.house,
             "variety": self.VARIETY, "crop_protocol": self.proto,
             "planting_date": planting, "qty_planted": qty, "status": "Active",
         }).insert(ignore_permissions=True)
@@ -126,7 +127,7 @@ class TestForecastRevisions(FrappeTestCase):
         if not frappe.db.exists("Item", self.VARIETY):
             frappe.get_doc({
                 "doctype": "Item", "item_code": self.VARIETY,
-                "item_name": self.VARIETY, "item_group": "All Item Groups",
+                "item_name": self.VARIETY, "item_group": "All Item Groups", "is_stock_item": 1,
                 "stock_uom": default_uom(),
             }).insert(ignore_permissions=True, ignore_mandatory=True)
         frappe.db.delete("Production Forecast", {"greenhouse": self.house})
@@ -137,15 +138,16 @@ class TestForecastRevisions(FrappeTestCase):
         if not frappe.db.exists("Crop Protocol", proto):
             frappe.get_doc({
                 "doctype": "Crop Protocol", "protocol_name": proto,
+                "crop_type": "Roses", "variety": self.VARIETY,
                 "variety_item": self.VARIETY, "weeks_to_first_bending": 5,
                 "weeks_to_second_bending": 5, "weeks_between_cuts": 7,
                 "stems_per_plant_first_harvest": 0.7, "stems_per_cut": 1.5,
                 "max_stems_per_plant_per_cut": 1.61, "productive_life_weeks": 260,
-            }).insert(ignore_permissions=True)
+            }).insert(ignore_permissions=True, set_name=proto)
         if not frappe.db.exists("Crop Cycle", {"greenhouse": self.house,
                                                "variety": self.VARIETY}):
             frappe.get_doc({
-                "doctype": "Crop Cycle", "greenhouse": self.house,
+                "doctype": "Crop Cycle", **cycle_extras(), "greenhouse": self.house,
                 "variety": self.VARIETY, "crop_protocol": proto,
                 "planting_date": datetime.date(2026, 1, 5),
                 "qty_planted": 10000, "status": "Active",
@@ -552,3 +554,13 @@ class TestForecastHistory(_BudgetFixture, FrappeTestCase):
         self.assertFalse(r["failed"])
 
 
+
+
+class TestBlockBased(FrappeTestCase):
+    """A cycle with no greenhouse (live Margin Par) is grouped by its block, not dropped."""
+
+    def test_house_of_falls_back_to_block_then_farm(self):
+        self.assertEqual(budget.house_of({"greenhouse": "GH1", "custom_block": "B"}), "GH1")
+        self.assertEqual(budget.house_of({"greenhouse": None, "custom_block": "Farm - Block 7", "farm": "F"}), "Farm - Block 7")
+        self.assertEqual(budget.house_of({"greenhouse": None, "farm": "Carzan St"}), "Carzan St")
+        self.assertEqual(budget.house_of({}), "")

@@ -13,7 +13,7 @@ import unittest
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from upande_crop_material_planning.tests import default_company, default_employee, default_uom, make_warehouse
+from upande_crop_material_planning.tests import cycle_extras, default_company, default_employee, default_uom, make_warehouse
 
 from upande_crop_material_planning import api
 
@@ -39,8 +39,11 @@ class TestApi(FrappeTestCase):
 
     def _make_protocol(self, name="TEST-PROTO-1"):
         """Idempotent: refresh values on re-run so a stale row can't skew a test."""
+        item = self._make_item()
         values = {
-            "variety_item": self._make_item(),
+            # Live-schema sites make these mandatory
+            "crop_type": "Roses", "variety": item,
+            "variety_item": item,
             "weeks_to_first_bending": 5,
             "weeks_to_second_bending": 5,
             "weeks_between_cuts": 7,
@@ -56,7 +59,7 @@ class TestApi(FrappeTestCase):
             return doc.name
         return frappe.get_doc({
             "doctype": "Crop Protocol", "protocol_name": name, **values,
-        }).insert(ignore_permissions=True).name
+        }).insert(ignore_permissions=True, set_name=name).name
 
     def _make_cycle(self, gh=None, proto=None, variety=None):
         """Ensure the greenhouse has one Active cycle; return that child row."""
@@ -70,7 +73,7 @@ class TestApi(FrappeTestCase):
         if existing:
             return frappe.get_doc("Crop Cycle", existing)
         return frappe.get_doc({
-            "doctype": "Crop Cycle",
+            "doctype": "Crop Cycle", **cycle_extras(),
             "greenhouse": gh, "variety": variety, "crop_protocol": proto,
             "planting_date": datetime.date(2026, 1, 5),
             "status": "Active", "qty_planted": 10000,

@@ -6,6 +6,7 @@ import unittest
 from upande_crop_material_planning.projection_calc import (
     build_budget_year,
     cycle_weekly_stems,
+    iso_week_key,
     production_start,
     split_by_grade,
 )
@@ -230,3 +231,37 @@ class TestFlushModel(unittest.TestCase):
 
     def test_no_flush_rows_is_empty(self):
         self.assertEqual(cycle_weekly_stems(FLUSH_CYCLE, {**FLUSH_PROTOCOL, "flush_schedule": []}), {})
+
+
+class TestLiveSummerFlowers(unittest.TestCase):
+    """Live Margin Par: crop type "Summer Flowers", flush offsets left at 0, block-based cycles."""
+
+    FLUSHES = [{"flush_number": i + 1, "weeks_after_first_flush": 0, "stems_per_plant": 2.0} for i in range(4)]
+    PROTO = {
+        "crop_type": "Summer Flowers", "custom_is_summer_flower": 1, "reject_pct": 0, "flush_schedule": FLUSHES,
+        "custom_sf_first_harvest_offset_weeks": 20, "custom_sf_flushes_per_year": 4.0,
+    }
+    CYC = {"planting_date": datetime.date(2026, 1, 5), "qty_planted": 1000}
+
+    def test_plural_crop_type_is_a_summer_flower(self):
+        from upande_crop_material_planning.projection_calc import is_summer_flower
+        self.assertTrue(is_summer_flower({"crop_type": "Summer Flowers"}))
+        self.assertTrue(is_summer_flower({"crop_type": "Summer Flower"}))
+        self.assertTrue(is_summer_flower({"crop_type": "Roses", "custom_is_summer_flower": 1}))
+        self.assertFalse(is_summer_flower({"crop_type": "Standard Roses"}))
+
+    def test_flushes_are_spread_from_the_first_harvest_offset(self):
+        out = cycle_weekly_stems(self.CYC, self.PROTO)
+        self.assertEqual(sum(out.values()), 8000)          # 1000 plants x 4 flushes x 2.0
+        self.assertEqual(len(out), 4)                      # four different weeks, not one pile
+        first = min(out)
+        self.assertEqual(first, iso_week_key(datetime.date(2026, 1, 5) + datetime.timedelta(weeks=20)))
+
+    def test_cycle_weekly_targets_are_the_plan(self):
+        d = datetime.date(2026, 6, 1)
+        cyc = {**self.CYC, "weekly_targets": [(d, 500), (d, 250), (d + datetime.timedelta(weeks=1), 100)]}
+        out = cycle_weekly_stems(cyc, self.PROTO)
+        self.assertEqual(sorted(out.values()), [100, 750])
+
+    def test_roses_are_untouched(self):
+        self.assertEqual(cycle_weekly_stems(CYCLE, PROTOCOL), cycle_weekly_stems(dict(CYCLE), dict(PROTOCOL)))

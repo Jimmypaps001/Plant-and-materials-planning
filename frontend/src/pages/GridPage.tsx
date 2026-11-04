@@ -82,7 +82,7 @@ const TONE = {
 };
 
 export function GridPage({ grain }: { grain: Grain }) {
-  const { payload, blocks, loading, error, reload, year, start, span } = usePlanning();
+  const { payload, blocks, loading, error, reload, year, start, span, nameOf } = usePlanning();
   const toast = useToast();
   const meta = TITLES[grain];
 
@@ -104,9 +104,9 @@ export function GridPage({ grain }: { grain: Grain }) {
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return sortBlocks(blocks, sort).filter(
-      (b) => !q || `${b.greenhouse} ${b.variety}`.toLowerCase().includes(q.replace(/\s+/g, " ")),
+      (b) => !q || `${b.greenhouse} ${b.variety} ${nameOf(b.variety)}`.toLowerCase().includes(q.replace(/\s+/g, " ")),
     );
-  }, [blocks, query, sort]);
+  }, [blocks, query, sort, nameOf]);
 
   const derived = useMemo(() => {
     const m = new Map<string, Derived>();
@@ -254,7 +254,7 @@ export function GridPage({ grain }: { grain: Grain }) {
     const clim = grain === "week" ? payload.climate?.[`${d.years[ref.ci]}-${d.keys[ref.ci]}`] : undefined;
     setEditing({
       block: b.key,
-      label: `${house(b.greenhouse)} › ${b.variety}`,
+      label: `${house(b.greenhouse)} › ${nameOf(b.variety)}`,
       grade: ref.grade,
       col: d.keys[ref.ci],
       colLabel: d.cols[ref.ci],
@@ -298,8 +298,8 @@ export function GridPage({ grain }: { grain: Grain }) {
     if (!payload) return;
     const first = shown[0] && derived.get(shown[0].key);
     if (!first) return;
-    const rows = shown.map((b) => ({ label: [b.greenhouse, b.variety], values: derived.get(b.key)!.plan }));
-    const text = toCsv(rows, ["Greenhouse", "Variety", ...first.cols]);
+    const rows = shown.map((b) => ({ label: [b.greenhouse, nameOf(b.variety), b.variety], values: derived.get(b.key)!.plan }));
+    const text = toCsv(rows, ["Greenhouse", "Variety", "Item code", ...first.cols]);
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
     a.download = `${meta.title.toLowerCase()}-${year}.csv`;
@@ -440,8 +440,8 @@ export function GridPage({ grain }: { grain: Grain }) {
                               {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-[var(--sd-quiet)]" /> : <ChevronRight className="h-3.5 w-3.5 text-[var(--sd-quiet)]" />}
                               <span className="min-w-0">
                                 <span className="block truncate text-[12px] font-medium text-[var(--sd-ink)]" title={b.greenhouse}>{house(b.greenhouse)}</span>
-                                <span className="block truncate text-[11px] text-[var(--sd-muted)]">
-                                  {b.variety}
+                                <span className="block truncate text-[11px] text-[var(--sd-muted)]" title={`Item ${b.variety}`}>
+                                  {nameOf(b.variety)}
                                   {b.area ? ` · ${Math.round(b.area).toLocaleString()} m²` : ""}
                                 </span>
                               </span>
