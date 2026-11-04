@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { gridPayload, isError, type Block, type GridPayload } from "@/lib/api";
 import { currentIsoWeek, shiftWeek, type IsoWeek } from "@/lib/weeks";
 import type { TreeNode } from "@/components/TreePicker";
+import { inCrop, useCropMap, type CropMap } from "@/lib/crops";
 
 /** Shared filters + the one grid payload every page reads (budget.grid_payload). */
 
@@ -38,7 +39,13 @@ export interface PlanningState {
   setStart: (w: IsoWeek) => void;
   span: number;
   setSpan: (n: number) => void;
-  /** Blocks the greenhouse/variety filter lets through. */
+  /** The open crop (a crop_key, or "all"), the crops on file, and a way to switch. */
+  crop: string;
+  setCrop: (c: string) => void;
+  cropMap: CropMap;
+  /** Whether a variety (Item code) belongs to the open crop. */
+  inOpenCrop: (variety: string) => boolean;
+  /** Blocks the crop and the greenhouse/variety filter let through. */
   blocks: Block[];
   tree: TreeNode[];
   checked: Set<string>;
@@ -59,7 +66,16 @@ export const ghId = (g: string) => "gh:" + g;
 export const house = (h: string | null | undefined) =>
   String(h || "").replace(/^Main\s+/i, "").replace(/\s*-\s*[A-Z]{2,4}$/, "");
 
-export function PlanningProvider({ children }: { children: React.ReactNode }) {
+export function PlanningProvider({
+  crop,
+  onCrop,
+  children,
+}: {
+  crop: string;
+  onCrop: (c: string) => void;
+  children: React.ReactNode;
+}) {
+  const cropMap = useCropMap();
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [start, setStart] = useState<IsoWeek | null>(null);
   const [payload, setPayload] = useState<GridPayload | null>(null);
@@ -67,6 +83,7 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [checked, setChecked] = useState<Set<string> | null>(null);
   const tick = useRef(0);
+  useEffect(() => setChecked(null), [crop]);
   const [nonce, setNonce] = useState(0);
 
   const save = (p: Prefs) => {
@@ -107,9 +124,12 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
     });
   }, [prefs.year, prefs.src, prefs.span, start, nonce]);
 
+  const inOpenCrop = useCallback((v: string) => inCrop(cropMap, crop, v), [cropMap, crop]);
+  const cropBlocks = useMemo(() => (payload?.blocks ?? []).filter((b) => inOpenCrop(b.variety)), [payload, inOpenCrop]);
+
   const tree = useMemo<TreeNode[]>(() => {
     const by = new Map<string, Block[]>();
-    (payload?.blocks ?? []).forEach((b) => by.set(b.greenhouse, [...(by.get(b.greenhouse) ?? []), b]));
+    cropBlocks.forEach((b) => by.set(b.greenhouse, [...(by.get(b.greenhouse) ?? []), b]));
     return [...by.entries()].map(([gh, list]) => ({
       id: ghId(gh),
       label: house(gh),
@@ -117,14 +137,14 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
       count: list.length,
       children: list.map((b) => ({ id: b.key, label: b.variety, search: `${gh} ${b.variety}` })),
     }));
-  }, [payload]);
+  }, [cropBlocks]);
 
   // Until the user touches the picker, everything is in.
-  const allLeaves = useMemo(() => new Set((payload?.blocks ?? []).map((b) => b.key)), [payload]);
+  const allLeaves = useMemo(() => new Set(cropBlocks.map((b) => b.key)), [cropBlocks]);
   const effective = checked ?? allLeaves;
   const blocks = useMemo(
-    () => (payload?.blocks ?? []).filter((b) => effective.has(b.key) || effective.has(ghId(b.greenhouse))),
-    [payload, effective],
+    () => cropBlocks.filter((b) => effective.has(b.key) || effective.has(ghId(b.greenhouse))),
+    [cropBlocks, effective],
   );
 
   const value: PlanningState = {
@@ -143,6 +163,10 @@ export function PlanningProvider({ children }: { children: React.ReactNode }) {
     setStart,
     span: prefs.span,
     setSpan: (span) => save({ ...prefs, span }),
+    crop,
+    setCrop: onCrop,
+    cropMap,
+    inOpenCrop,
     blocks,
     tree,
     checked: effective,

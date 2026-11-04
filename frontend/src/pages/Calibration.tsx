@@ -5,7 +5,7 @@ import { KpiCard, KpiGrid } from "@/components/KpiCard";
 import { FilterSelect } from "@/components/FilterSelect";
 import { ToolbarButton } from "@/components/ToolbarButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClassicLink } from "@/components/PlanningFilters";
+import { ClassicLink, CropFilter } from "@/components/PlanningFilters";
 import { useToast } from "@/components/Toast";
 import { calibrateVariety, getDoc, isError, type Calibration as Cal } from "@/lib/api";
 import { fmtN } from "@/lib/grid";
@@ -16,10 +16,11 @@ interface Protocol { grade_mix?: { length_cm: number; pct: number; source: strin
 
 /** Calibration: read harvest actuals back against the Crop Protocol (budget.calibrate_variety). Applying only rewrites the measured grade mix. */
 export function Calibration() {
-  const { payload } = usePlanning();
+  const { payload, blocks: cropBlocks, inOpenCrop } = usePlanning();
+  void inOpenCrop;
   const toast = useToast();
-  const varieties = useMemo(() => [...new Set((payload?.blocks ?? []).map((b) => b.variety))].sort(), [payload]);
-  const houses = useMemo(() => [...new Set((payload?.blocks ?? []).map((b) => b.greenhouse))].sort(), [payload]);
+  const varieties = useMemo(() => [...new Set(cropBlocks.map((b) => b.variety))].sort(), [cropBlocks]);
+  const houses = useMemo(() => [...new Set(cropBlocks.map((b) => b.greenhouse))].sort(), [cropBlocks]);
   const [variety, setVariety] = useState("");
   const [gh, setGh] = useState("");
   const [res, setRes] = useState<Cal | null>(null);
@@ -28,7 +29,8 @@ export function Calibration() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!variety && varieties.length) setVariety(varieties[0]);
+    if (varieties.length && !varieties.includes(variety)) setVariety(varieties[0]);
+    if (!varieties.length) setVariety("");
   }, [variety, varieties]);
 
   const run = async (apply: 0 | 1 = 0) => {
@@ -65,6 +67,7 @@ export function Calibration() {
       description="Back-solve the Crop Protocol from real harvest. The grade mix can be applied; yield figures are reported only, because they need a grower's eye."
       actions={
         <>
+          <CropFilter />
           <FilterSelect label="Variety" value={variety} onChange={setVariety} options={varieties} />
           <FilterSelect label="Greenhouse" value={gh} onChange={setGh} options={houses} allLabel="All greenhouses" format={house} />
           <ToolbarButton disabled={busy || !res || !Object.keys(res.grade_mix).length || !res.protocol} onClick={() => window.confirm(`Replace the measured grade mix on ${res?.protocol}?\n\nManual rows are kept.`) && void run(1)}>

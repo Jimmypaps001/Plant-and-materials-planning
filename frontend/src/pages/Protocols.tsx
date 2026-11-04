@@ -5,8 +5,9 @@ import { SearchInput } from "@/components/SearchInput";
 import { ScrollTable, STICKY_HEAD } from "@/components/ScrollTable";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { ClassicLink, ReloadButton } from "@/components/PlanningFilters";
+import { ClassicLink, CropFilter, ReloadButton } from "@/components/PlanningFilters";
 import { RowsSkeleton } from "@/components/Loading";
+import { usePlanning } from "@/lib/planning";
 import { getDoc, getList, isError } from "@/lib/api";
 
 interface Proto {
@@ -30,6 +31,7 @@ const FIELDS = ["name", "protocol_name", "variety_item", "crop_type", "weeks_to_
 
 /** Crop Protocols: the yield model every budget is built from. Read here; edit on the desk form. */
 export function Protocols() {
+  const { inOpenCrop } = usePlanning();
   const [rows, setRows] = useState<Proto[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -41,7 +43,7 @@ export function Protocols() {
     void getList<Proto>("Crop Protocol", FIELDS, { order_by: "modified desc" }).then((r) => (isError(r) ? setErr(r.error) : setRows(r as Proto[])));
   }, [nonce]);
 
-  const shown = useMemo(() => (rows ?? []).filter((r) => !q.trim() || `${r.protocol_name} ${r.variety_item} ${r.crop_type}`.toLowerCase().includes(q.trim().toLowerCase())), [rows, q]);
+  const shown = useMemo(() => (rows ?? []).filter((r) => inOpenCrop(r.variety_item ?? "") && (!q.trim() || `${r.protocol_name} ${r.variety_item} ${r.crop_type}`.toLowerCase().includes(q.trim().toLowerCase()))), [rows, q, inOpenCrop]);
   const num = (n: number | null | undefined) => (n == null ? "—" : Number(n).toLocaleString("en-US"));
   const head = "py-2 px-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--sd-quiet)]";
 
@@ -50,7 +52,7 @@ export function Protocols() {
       title="Crop Protocols"
       eyebrow="Crop Material Planning"
       description="Weeks to bending, cut cycle, stems per cut and grade mix per variety. Budgets are generated from these."
-      actions={<><SearchInput value={q} onChange={setQ} placeholder="Protocol or variety…" className="w-56" /><ReloadButton /><a className="inline-flex h-9 items-center gap-2 rounded-full bg-card px-4 text-xs font-medium shadow-[var(--sd-shadow-1)]" href="/desk/crop-protocol/new"><ExternalLink className="h-3.5 w-3.5" />New protocol</a><ClassicLink view="protocols" /></>}
+      actions={<><CropFilter /><SearchInput value={q} onChange={setQ} placeholder="Protocol or variety…" className="w-56" /><ReloadButton /><a className="inline-flex h-9 items-center gap-2 rounded-full bg-card px-4 text-xs font-medium shadow-[var(--sd-shadow-1)]" href="/desk/crop-protocol/new"><ExternalLink className="h-3.5 w-3.5" />New protocol</a><ClassicLink view="protocols" /></>}
     >
       {err && <p className="text-[13px] text-[var(--sd-data-red)]">{err}</p>}
       <Card>

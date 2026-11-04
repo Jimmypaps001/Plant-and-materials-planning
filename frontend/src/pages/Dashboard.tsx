@@ -5,7 +5,7 @@ import { KpiCard, KpiGrid } from "@/components/KpiCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageSkeleton } from "@/components/Loading";
-import { ClassicLink, ReloadButton, SourceFilter, YearFilter } from "@/components/PlanningFilters";
+import { ClassicLink, CropFilter, ReloadButton, SourceFilter, YearFilter } from "@/components/PlanningFilters";
 import { OverviewTab } from "@/pages/OverviewTab";
 import { fmtM, fmtMU, fmtN, signed, unitM } from "@/lib/grid";
 import { house, usePlanning } from "@/lib/planning";
@@ -87,6 +87,7 @@ function BudgetTab() {
   if (!blocks.length)
     return <p className="text-[13px] text-[var(--sd-muted)]">No blocks. Record a Crop Cycle to begin.</p>;
 
+  const budgetTotal = blocks.reduce((t, b) => t + b.budget_total, 0);
   const allVar = payload.blocks.map((b) => b.variety);
   const curve = payload.months.map((m, i) => ({ month: m, budget: s.bud[i], actual: s.act[i] }));
   const peak = s.bud.indexOf(Math.max(...s.bud));
@@ -120,7 +121,7 @@ function BudgetTab() {
   return (
     <div className="flex flex-col gap-6">
       <KpiGrid>
-        <KpiCard label="Crop year budget" value={fmtM(payload.budget_total)} hint={`${unitM(payload.budget_total)} · ${blocks.length} blocks · ${s.houses} houses`} />
+        <KpiCard label="Crop year budget" value={fmtM(budgetTotal)} hint={`${unitM(budgetTotal)} · ${blocks.length} blocks · ${s.houses} houses`} />
         <KpiCard label="This week" value={fmtM(s.week)} hint={`W${payload.now_week} planned · ${fmtN(payload.week_actual_total)} cut`} tone="accent" />
         <KpiCard
           label="Actual vs budget"
@@ -250,6 +251,7 @@ export function Dashboard() {
       }
       actions={
         <>
+          <CropFilter />
           {tab === "budget" && <><YearFilter /><SourceFilter /></>}
           <ReloadButton />
           <ClassicLink view="dashboard" />

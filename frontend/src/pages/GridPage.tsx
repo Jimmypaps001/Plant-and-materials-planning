@@ -25,7 +25,7 @@ import { CellDialog, type CellTarget } from "@/components/CellDialog";
 import { MiniSpark } from "@/components/MiniSpark";
 import { PageSkeleton } from "@/components/Loading";
 import { useToast } from "@/components/Toast";
-import { BlockFilter, ClassicLink, SourceFilter, WindowFilter, YearFilter } from "@/components/PlanningFilters";
+import { BlockFilter, CropFilter, ClassicLink, SourceFilter, WindowFilter, YearFilter } from "@/components/PlanningFilters";
 import { generateAllBudgets, isError, reviseBlocks, setBudgetCell, setForecastCell } from "@/lib/api";
 import {
   ALL,
@@ -318,6 +318,7 @@ export function GridPage({ grain }: { grain: Grain }) {
 
   const actions = (
     <>
+      <CropFilter />
       <YearFilter />
       {grain !== "life" && <SourceFilter />}
       {grain === "week" && <WindowFilter />}
@@ -382,7 +383,7 @@ export function GridPage({ grain }: { grain: Grain }) {
           {toolbtn("Download CSV", <Download className="h-4 w-4" />, csv)}
           {toolbtn("Print", <Printer className="h-4 w-4" />, () => window.print())}
           <span className="text-[11px] tabular-nums text-[var(--sd-quiet)]">
-            {selected.length ? `${selected.length} selected` : `${shown.length} of ${payload.blocks.length} blocks`}
+            {selected.length ? `${selected.length} selected` : `${shown.length} of ${blocks.length} blocks`}
           </span>
         </div>
       </div>
@@ -534,8 +535,8 @@ export function GridPage({ grain }: { grain: Grain }) {
       )}
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[12px] text-[var(--sd-muted)]">
-        <span><b className="text-[var(--sd-ink)]">{payload.blocks.length}</b> blocks · <b className="text-[var(--sd-ink)]">{payload.house_count}</b> greenhouses</span>
-        <span><b className="text-[var(--sd-ink)]">{fmtM(payload.budget_total)}</b> {unitM(payload.budget_total)} budgeted</span>
+        <span><b className="text-[var(--sd-ink)]">{blocks.length}</b> blocks · <b className="text-[var(--sd-ink)]">{new Set(blocks.map((b) => b.greenhouse)).size}</b> greenhouses</span>
+        <span><b className="text-[var(--sd-ink)]">{fmtM(blocks.reduce((t, b) => t + b.budget_total, 0))}</b> {unitM(blocks.reduce((t, b) => t + b.budget_total, 0))} budgeted</span>
         {payload.weeks.length > 0 && <span>Forecast W{payload.weeks[0]}–W{payload.weeks[payload.weeks.length - 1]} · {payload.weeks.length} weeks</span>}
         <span className="flex-1" />
         <span>

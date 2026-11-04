@@ -1,33 +1,43 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Hash routing: `#/<view>`. The page is served by Frappe at a single route (/planning_app), so a
- * hash router needs no server-side catch-all.
+ * Hash routing, namespaced by crop: `#/<crop_key>/<view>`, the way /production_app does it. `all` is
+ * "All crops". The old crop-less form `#/<view>` still works and means All crops, so existing links
+ * (the workspace tiles, the classic planner) keep landing where they did.
  */
 export const VIEWS = ["dashboard", "budget", "forecast", "lifetime", "calibration", "protocols"] as const;
 export type View = (typeof VIEWS)[number];
 export const DEFAULT_VIEW: View = "dashboard";
+export const ALL_CROPS = "all";
 
 export function isView(v: string): v is View {
   return (VIEWS as readonly string[]).includes(v);
 }
 
-export function parseRoute(hash: string): View {
-  const raw = (hash || "").replace(/^#\/?/, "").split("?")[0].split("/")[0].toLowerCase();
-  return isView(raw) ? raw : DEFAULT_VIEW;
+export interface Route {
+  crop: string;
+  view: View;
 }
 
-export const routeHash = (v: View) => `#/${v}`;
+export function parseRoute(hash: string): Route {
+  const parts = (hash || "").replace(/^#\/?/, "").split("?")[0].split("/").filter(Boolean).map((p) => p.toLowerCase());
+  if (parts.length && isView(parts[0])) return { crop: ALL_CROPS, view: parts[0] };
+  const view = parts[1] && isView(parts[1]) ? parts[1] : DEFAULT_VIEW;
+  return { crop: parts[0] ? decodeURIComponent(parts[0]) : ALL_CROPS, view };
+}
 
-export function useRoute(): [View, (v: View) => void] {
-  const [view, setView] = useState<View>(() => parseRoute(window.location.hash));
+export const routeHash = (crop: string, view: View = DEFAULT_VIEW) => `#/${encodeURIComponent(crop || ALL_CROPS)}/${view}`;
+
+export function useRoute(): [Route, (crop: string, view?: View) => void] {
+  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
   useEffect(() => {
-    const onChange = () => setView(parseRoute(window.location.hash));
+    const onChange = () => setRoute(parseRoute(window.location.hash));
     window.addEventListener("hashchange", onChange);
     return () => window.removeEventListener("hashchange", onChange);
   }, []);
-  const navigate = useCallback((v: View) => {
-    if (window.location.hash !== routeHash(v)) window.location.hash = routeHash(v);
+  const navigate = useCallback((crop: string, view: View = DEFAULT_VIEW) => {
+    const h = routeHash(crop, view);
+    if (window.location.hash !== h) window.location.hash = h;
   }, []);
-  return [view, navigate];
+  return [route, navigate];
 }

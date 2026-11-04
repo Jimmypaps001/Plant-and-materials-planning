@@ -39,6 +39,17 @@
 		<div id="planning-root"></div>
 		<div class="pr-splash" id="pr-splash">
 			<img id="pr-splash-mark" src="/assets/upande_crop_material_planning/images/crop_material_planning_logo_loader.svg" alt="Crop Material Planning" />
+			<script>
+				// Entering a crop (#/<crop_key>/...): its own loader, if one is built; else the generic one.
+				(function () {
+					var k = (location.hash.match(/^#\/([a-z0-9-]+)/) || [])[1];
+					var img = document.getElementById("pr-splash-mark");
+					if (!k || k === "all" || !img || /^(dashboard|budget|forecast|lifetime|calibration|protocols)$/.test(k)) return;
+					var fallback = img.src;
+					img.onerror = function () { img.onerror = null; img.src = fallback; };
+					img.src = "/assets/upande_crop_material_planning/images/crop_material_planning_logo_" + k + "_loader.svg";
+				})();
+			</script>
 		</div>
 
 		<script type="application/json" id="planning-bootstrap">{{ bootstrap_json | safe }}</script>

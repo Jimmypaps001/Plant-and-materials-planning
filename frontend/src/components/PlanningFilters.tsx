@@ -9,6 +9,19 @@ import { CLASSIC } from "@/lib/nav";
 import type { View } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
+/** Crop picker: All crops plus each Production Crop; filters the tree and every page. */
+export function CropFilter() {
+  const { crop, setCrop, cropMap } = usePlanning();
+  return (
+    <FilterSelect
+      label="Crop"
+      value={crop}
+      onChange={(v) => setCrop(v || "all")}
+      options={[{ value: "all", label: "All crops" }, ...cropMap.crops.map((c) => ({ value: c.crop_key, label: c.name }))]}
+    />
+  );
+}
+
 /** Crop-year picker: the budget year (calendar year of the forecast); the Sep-Aug crop year is in the eyebrow. */
 export function YearFilter() {
   const { year, setYear } = usePlanning();

@@ -9,6 +9,7 @@ import { PageSkeleton } from "@/components/Loading";
 import { ScrollTable, STICKY_HEAD } from "@/components/ScrollTable";
 import { getList, isError } from "@/lib/api";
 import { fmtN } from "@/lib/grid";
+import { usePlanning } from "@/lib/planning";
 import { PALETTE } from "@/lib/palette";
 
 interface Gh { name: string; farm: string | null; number_of_beds: number; number_of_plants: number; area_planted: number; gross_area: number }
@@ -24,6 +25,7 @@ function by<T>(rows: T[], key: (r: T) => string, val: (r: T) => number) {
 
 /** Production overview (legacy Dashboard tab): area, plants and plantings across every farm, from Crop Cycle and Greenhouse. */
 export function OverviewTab() {
+  const { inOpenCrop } = usePlanning();
   const [ghs, setGhs] = useState<Gh[] | null>(null);
   const [ccs, setCcs] = useState<Cycle[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -49,13 +51,14 @@ export function OverviewTab() {
     const needle = q.trim().toLowerCase();
     return (ccs ?? []).filter(
       (c) =>
+        inOpenCrop(c.variety) &&
         (!farm || c.farm === farm) &&
         (!gh || c.greenhouse === gh) &&
         (!variety || c.variety === variety) &&
         (!year || (c.planting_date ?? "").startsWith(year)) &&
         (!needle || `${c.greenhouse} ${c.variety} ${c.name}`.toLowerCase().includes(needle)),
     );
-  }, [ccs, farm, gh, variety, year, q]);
+  }, [ccs, farm, gh, variety, year, q, inOpenCrop]);
 
   if (err) return <p className="text-[13px] text-[var(--sd-muted)]">Could not load Crop Cycle / Greenhouse data: {err}</p>;
   if (!ghs || !ccs) return <PageSkeleton />;

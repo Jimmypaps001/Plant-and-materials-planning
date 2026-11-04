@@ -177,7 +177,7 @@ def check(key: str, tracks) -> None:
 
 def write(key: str, scene) -> None:
     check(key, ENTER + scene.LOOP)
-    stem = "crop_material_planning_logo"
+    stem = "crop_material_planning_logo" if key == "planning" else f"crop_material_planning_logo_{key}"
     # Desk tile: pure CSS, plays once on load (arrow out, scene, arrow back) and ends exactly at
     # rest, the plain Upande mark. Served through <img>, where scripts never run; a replay on hover
     # is done by swapping the <img> src (a generic script in upande_production).
@@ -204,7 +204,7 @@ def write(key: str, scene) -> None:
 
 def main(only: list[str] | None = None):
     for mod in pkgutil.iter_modules(logo_scenes.__path__):
-        if mod.name == "common":
+        if mod.name == "common" or mod.name.startswith("_"):
             continue
         key = mod.name.replace("_", "-")
         if only and key not in only:

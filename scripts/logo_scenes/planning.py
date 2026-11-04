@@ -27,16 +27,23 @@ def bar(i: int) -> str:
 
 LINE_D = "M" + " L".join(f"{x} {y}" for x, y in LINE)
 
-SCENE = f"""<g class="plan">
+def scene(accent: str = ACCENT, crop: str = "") -> str:
+    """The planning scene; `crop` is extra markup (a flower head) standing on the forecast line's end."""
+    return f"""<g class="plan">
     <rect x="140" y="{BASE_Y}" width="408" height="6" fill="{INK}"/>
     {"".join(bar(i) for i in range(5))}
-    <path class="fcast" d="{LINE_D}" fill="none" stroke="{ACCENT}" stroke-width="13"
+    <path class="fcast" d="{LINE_D}" fill="none" stroke="{accent}" stroke-width="13"
           stroke-linejoin="round" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
     <g class="actual">
       <circle cx="{ACTUAL[0]}" cy="{ACTUAL[1]}" r="26" fill="#ffffff"/>
       <circle cx="{ACTUAL[0]}" cy="{ACTUAL[1]}" r="17" fill="{INK}"/>
     </g>
+    {crop}
   </g>"""
+
+
+SCENE = scene()
+LINE_END = LINE[-1]
 
 
 def _rise(lo, hi):
@@ -45,24 +52,28 @@ def _rise(lo, hi):
             (0.90, {"transform": "scaleY(1)"}), (0.91, {"transform": "scaleY(0)"}), (1, {"transform": "scaleY(0)"})]
 
 
-LOOP = [
-    (".plan", STAGE_ORIGIN, [
-        (0, {"transform": "scale(.96)", "opacity": 0}),
-        (0.04, SHOW), (0.88, SHOW), (0.95, HIDE), (1, {"transform": "scale(.86)", "opacity": 0}),
-    ]),
-] + [
-    (f".bar{i}", f"view-box|{BAR_X[i]}px {BASE_Y}px", _rise(0.06 + 0.06 * i, 0.16 + 0.06 * i)) for i in range(5)
-] + [
-    (".fcast", None, [
-        (0, {"strokeDashoffset": 1}), (0.42, {"strokeDashoffset": 1}), (0.62, {"strokeDashoffset": 0}),
-        (0.90, {"strokeDashoffset": 0}), (0.91, {"strokeDashoffset": 1}), (1, {"strokeDashoffset": 1}),
-    ]),
-    (".actual", None, [
-        (0, {"transform": "translateY(-70px)", "opacity": 0}), (0.66, {"transform": "translateY(-70px)", "opacity": 0}),
-        (0.76, {"transform": "translateY(0px)", "opacity": 1}),
-        (0.90, {"transform": "translateY(0px)", "opacity": 1}), (0.91, {"transform": "translateY(-70px)", "opacity": 0}),
-        (1, {"transform": "translateY(-70px)", "opacity": 0}),
-    ]),
-]
+def loop(extra=()):
+    return [
+        (".plan", STAGE_ORIGIN, [
+            (0, {"transform": "scale(.96)", "opacity": 0}),
+            (0.04, SHOW), (0.88, SHOW), (0.95, HIDE), (1, {"transform": "scale(.86)", "opacity": 0}),
+        ]),
+    ] + [
+        (f".bar{i}", f"view-box|{BAR_X[i]}px {BASE_Y}px", _rise(0.06 + 0.06 * i, 0.16 + 0.06 * i)) for i in range(5)
+    ] + [
+        (".fcast", None, [
+            (0, {"strokeDashoffset": 1}), (0.42, {"strokeDashoffset": 1}), (0.62, {"strokeDashoffset": 0}),
+            (0.90, {"strokeDashoffset": 0}), (0.91, {"strokeDashoffset": 1}), (1, {"strokeDashoffset": 1}),
+        ]),
+        (".actual", None, [
+            (0, {"transform": "translateY(-70px)", "opacity": 0}), (0.66, {"transform": "translateY(-70px)", "opacity": 0}),
+            (0.76, {"transform": "translateY(0px)", "opacity": 1}),
+            (0.90, {"transform": "translateY(0px)", "opacity": 1}), (0.91, {"transform": "translateY(-70px)", "opacity": 0}),
+            (1, {"transform": "translateY(-70px)", "opacity": 0}),
+        ]),
+    ] + list(extra)
+
+
+LOOP = loop()
 
 LOOP_MS = 5600

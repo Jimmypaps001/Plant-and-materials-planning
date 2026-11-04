@@ -20,7 +20,7 @@ import { NAV } from "@/lib/nav";
 import { routeHash, type View } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
-export function AppSidebar({ view, onNavigate }: { view: View; onNavigate: (v: View) => void }) {
+export function AppSidebar({ crop, cropName, view, onNavigate }: { crop: string; cropName: string; view: View; onNavigate: (crop: string, v: View) => void }) {
   const { state, toggle } = useSidebar();
   const collapsed = state === "collapsed";
   return (
@@ -32,7 +32,7 @@ export function AppSidebar({ view, onNavigate }: { view: View; onNavigate: (v: V
             title="Open the Crop Material Planning workspace"
             className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full group-data-[collapsible=icon]:size-[3rem]"
           >
-            <PlanningMark size={48} />
+            <PlanningMark size={48} crop={crop} />
           </a>
           <div className="h-6 w-px shrink-0 bg-border group-data-[collapsible=icon]:hidden" />
           <div
@@ -46,7 +46,7 @@ export function AppSidebar({ view, onNavigate }: { view: View; onNavigate: (v: V
               Crop Material Planning
             </span>
             <span className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--sd-quiet)]">
-              Budget · Forecast
+              {cropName}
             </span>
           </div>
         </div>
@@ -68,10 +68,10 @@ export function AppSidebar({ view, onNavigate }: { view: View; onNavigate: (v: V
                           <SidebarMenuButton asChild isActive={active} title={it.label}>
                             {it.view ? (
                               <a
-                                href={routeHash(it.view)}
+                                href={routeHash(crop, it.view)}
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  onNavigate(it.view!);
+                                  onNavigate(crop, it.view!);
                                 }}
                               >
                                 <Icon className="h-4 w-4" />

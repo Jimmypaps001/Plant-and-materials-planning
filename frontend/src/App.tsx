@@ -1,10 +1,11 @@
 import { Suspense, lazy } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
+import { CropCover } from "@/components/CropCover";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/components/Toast";
 import { PageSkeleton } from "@/components/Loading";
-import { PlanningProvider } from "@/lib/planning";
+import { PlanningProvider, usePlanning } from "@/lib/planning";
 import { useRoute, type View } from "@/lib/router";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard").then((m) => ({ default: m.Dashboard })));
@@ -23,21 +24,30 @@ const PAGES: Record<View, React.ComponentType> = {
   protocols: Protocols,
 };
 
-export function App() {
-  const [view, navigate] = useRoute();
+function Shell({ view, navigate }: { view: View; navigate: (crop: string, view?: View) => void }) {
+  const { crop, cropMap } = usePlanning();
   const Page = PAGES[view];
+  const cropName = crop === "all" ? "All crops" : cropMap.crops.find((c) => c.crop_key === crop)?.name ?? crop;
+  return (
+    <SidebarProvider>
+      <AppSidebar crop={crop} cropName={cropName} view={view} onNavigate={navigate} />
+      <SidebarInset className="min-w-0">
+        <Suspense fallback={<PageSkeleton />}>
+          <Page key={view} />
+        </Suspense>
+      </SidebarInset>
+      <CropCover crop={crop} />
+    </SidebarProvider>
+  );
+}
+
+export function App() {
+  const [route, navigate] = useRoute();
   return (
     <TooltipProvider delayDuration={200}>
       <ToastProvider>
-        <PlanningProvider>
-          <SidebarProvider>
-            <AppSidebar view={view} onNavigate={navigate} />
-            <SidebarInset className="min-w-0">
-              <Suspense fallback={<PageSkeleton />}>
-                <Page key={view} />
-              </Suspense>
-            </SidebarInset>
-          </SidebarProvider>
+        <PlanningProvider crop={route.crop} onCrop={(c) => navigate(c, route.view)}>
+          <Shell view={route.view} navigate={navigate} />
         </PlanningProvider>
       </ToastProvider>
     </TooltipProvider>

@@ -91,8 +91,11 @@ describe("misc", () => {
     expect(toCsv([{ label: ["x"], values: [1, null] }], ["G", "W1", "W2"])).toBe('"G","W1","W2"\n"x","1",');
   });
   it("routes by hash and strips the farm suffix", () => {
-    expect(parseRoute("#/forecast")).toBe("forecast");
-    expect(parseRoute("#/nope")).toBe("dashboard");
+    expect(parseRoute("#/forecast")).toEqual({ crop: "all", view: "forecast" });
+    expect(parseRoute("#/spray-roses/budget")).toEqual({ crop: "spray-roses", view: "budget" });
+    expect(parseRoute("#/standard-roses")).toEqual({ crop: "standard-roses", view: "dashboard" });
+    expect(parseRoute("#/nope")).toEqual({ crop: "nope", view: "dashboard" });
+    expect(parseRoute("")).toEqual({ crop: "all", view: "dashboard" });
     expect(house("Main GH 05 - MFK")).toBe("GH 05");
   });
 });
@@ -109,5 +112,37 @@ describe("navigation", () => {
   });
   it("links out stay same-origin paths", () => {
     NAV.flatMap((g) => g.items).forEach((i) => i.href && expect(i.href).toMatch(/^\/[^/]/));
+  });
+});
+
+import { buildMap, cropOfVariety, inCrop, markUrl } from "@/lib/crops";
+
+describe("crops", () => {
+  const map = buildMap(
+    [
+      { name: "Standard Roses", crop_key: "standard-roses", accent_color: "#b8335a" },
+      { name: "Summer Flowers", crop_key: "summer-flowers", accent_color: "#3b6fb6" },
+    ],
+    [
+      { item: "Rose - Candid", crop: "Standard Roses" },
+      { item: "Eryngium - Orion", crop: "Summer Flowers" },
+      { item: "X", crop: "Unknown crop" },
+    ],
+  );
+  it("maps an Item code, its length variants and its bare name to the crop", () => {
+    expect(cropOfVariety(map, "Rose - Candid")).toBe("standard-roses");
+    expect(cropOfVariety(map, "ROSE - CANDID-60CM")).toBe("standard-roses");
+    expect(cropOfVariety(map, "Candid")).toBe("standard-roses");
+    expect(cropOfVariety(map, "Orion-50CM")).toBe("summer-flowers");
+    expect(cropOfVariety(map, "TEST-VARIETY-A")).toBeNull();
+  });
+  it("All crops lets everything through; a crop only its own", () => {
+    expect(inCrop(map, "all", "TEST-VARIETY-A")).toBe(true);
+    expect(inCrop(map, "standard-roses", "Candid")).toBe(true);
+    expect(inCrop(map, "standard-roses", "Orion")).toBe(false);
+  });
+  it("marks fall back to the generic file name for All crops", () => {
+    expect(markUrl("all")).toMatch(/crop_material_planning_logo\.svg$/);
+    expect(markUrl("spray-roses", true)).toMatch(/logo_spray-roses_loader\.svg$/);
   });
 });
