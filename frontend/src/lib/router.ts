@@ -5,7 +5,20 @@ import { useCallback, useEffect, useState } from "react";
  * "All crops". The old crop-less form `#/<view>` still works and means All crops, so existing links
  * (the workspace tiles, the classic planner) keep landing where they did.
  */
-export const VIEWS = ["dashboard", "budget", "forecast", "lifetime", "calibration", "protocols"] as const;
+export const VIEWS = [
+  "dashboard",
+  "budget",
+  "forecast",
+  "lifetime",
+  "calibration",
+  "protocols",
+  "market-demand",
+  "production-plans",
+  "season-plans",
+  "budgets",
+  "procurement",
+  "routes",
+] as const;
 export type View = (typeof VIEWS)[number];
 export const DEFAULT_VIEW: View = "dashboard";
 export const ALL_CROPS = "all";

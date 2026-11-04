@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageSkeleton } from "@/components/Loading";
 import { ClassicLink, CropFilter, ReloadButton, SourceFilter, YearFilter } from "@/components/PlanningFilters";
 import { OverviewTab } from "@/pages/OverviewTab";
+import { SfBudgetView } from "@/pages/SfBudgetView";
+import { useSfBudgets } from "@/lib/sfbudget";
+import { FilterSelect } from "@/components/FilterSelect";
+import { useEffect } from "react";
 import { fmtM, fmtMU, fmtN, signed, unitM } from "@/lib/grid";
 import { house, usePlanning } from "@/lib/planning";
 import { PALETTE, colourFor } from "@/lib/palette";
@@ -250,6 +254,12 @@ function BudgetTab() {
 export function Dashboard() {
   const { payload } = usePlanning();
   const [tab, setTab] = useState("budget");
+  // The real Summer Flower Budget is the default basis wherever there is one; the model (crop cycles) otherwise.
+  const sf = useSfBudgets();
+  const [basis, setBasis] = useState<"budget" | "model" | null>(null);
+  useEffect(() => {
+    if (sf.loaded && basis === null) setBasis(sf.budgets.length ? "budget" : "model");
+  }, [sf.loaded, sf.budgets.length, basis]);
   return (
     <PageShell
       title="Dashboard"
@@ -265,13 +275,22 @@ export function Dashboard() {
       actions={
         <>
           <CropFilter />
-          {tab === "budget" && <><YearFilter /><SourceFilter /></>}
+          {tab === "budget" && (
+            <FilterSelect
+              label="Basis"
+              value={basis ?? "model"}
+              onChange={(v) => setBasis(v as "budget" | "model")}
+              options={[{ value: "budget", label: "Summer Flower Budget" }, { value: "model", label: "Model (crop cycles)" }]}
+            />
+          )}
+          {tab === "budget" && <YearFilter />}
+          {tab === "budget" && basis === "model" && <SourceFilter />}
           <ReloadButton />
           <ClassicLink view="dashboard" />
         </>
       }
     >
-      {tab === "budget" ? <BudgetTab /> : <OverviewTab />}
+      {tab === "budget" ? basis === "budget" ? <SfBudgetView {...sf} /> : <BudgetTab /> : <OverviewTab />}
     </PageShell>
   );
 }

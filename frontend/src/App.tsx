@@ -15,6 +15,11 @@ const Lifetime = lazy(() => import("@/pages/GridPage").then((m) => ({ default: (
 const Calibration = lazy(() => import("@/pages/Calibration").then((m) => ({ default: m.Calibration })));
 const Protocols = lazy(() => import("@/pages/Protocols").then((m) => ({ default: m.Protocols })));
 
+const recordsPage = (view: View): React.ComponentType => {
+  const Lazy = lazy(() => import("@/pages/RecordsPage").then((m) => ({ default: () => <m.RecordsPage cfg={m.RECORDS.find((c) => c.view === view)!} /> })));
+  return Lazy;
+};
+
 const PAGES: Record<View, React.ComponentType> = {
   dashboard: Dashboard,
   budget: Budget,
@@ -22,6 +27,12 @@ const PAGES: Record<View, React.ComponentType> = {
   lifetime: Lifetime,
   calibration: Calibration,
   protocols: Protocols,
+  "market-demand": recordsPage("market-demand"),
+  "production-plans": recordsPage("production-plans"),
+  "season-plans": recordsPage("season-plans"),
+  budgets: recordsPage("budgets"),
+  procurement: recordsPage("procurement"),
+  routes: recordsPage("routes"),
 };
 
 function Shell({ view, navigate }: { view: View; navigate: (crop: string, view?: View) => void }) {

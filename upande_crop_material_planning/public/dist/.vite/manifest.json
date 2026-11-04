@@ -1,47 +1,47 @@
 {
-  "_KpiCard-rUsVeMhb.js": {
-    "file": "chunks/KpiCard-rUsVeMhb.js",
+  "_KpiCard-SNjTboge.js": {
+    "file": "chunks/KpiCard-SNjTboge.js",
     "name": "KpiCard",
     "imports": [
       "index.html",
-      "_card-DL7EtY1q.js"
+      "_card-DLKqT7NQ.js"
     ]
   },
-  "_PlanningFilters-RzS-uxoT.js": {
-    "file": "chunks/PlanningFilters-RzS-uxoT.js",
+  "_PlanningFilters-BJmQ8dj-.js": {
+    "file": "chunks/PlanningFilters-BJmQ8dj-.js",
     "name": "PlanningFilters",
     "imports": [
       "index.html"
     ]
   },
-  "_ScrollTable-DucP4eAe.js": {
-    "file": "chunks/ScrollTable-DucP4eAe.js",
+  "_ScrollTable-DKbhwC7f.js": {
+    "file": "chunks/ScrollTable-DKbhwC7f.js",
     "name": "ScrollTable",
     "imports": [
       "index.html"
     ]
   },
-  "_card-DL7EtY1q.js": {
-    "file": "chunks/card-DL7EtY1q.js",
+  "_card-DLKqT7NQ.js": {
+    "file": "chunks/card-DLKqT7NQ.js",
     "name": "card",
     "imports": [
       "index.html"
     ]
   },
-  "_dialog-1jMjdACp.js": {
-    "file": "chunks/dialog-1jMjdACp.js",
+  "_dialog--uNnTvgI.js": {
+    "file": "chunks/dialog--uNnTvgI.js",
     "name": "dialog",
     "imports": [
       "index.html",
-      "_PlanningFilters-RzS-uxoT.js"
+      "_PlanningFilters-BJmQ8dj-.js"
     ]
   },
-  "_grid-DAdzgk1E.js": {
-    "file": "chunks/grid-DAdzgk1E.js",
+  "_grid-BbzVbnVw.js": {
+    "file": "chunks/grid-BbzVbnVw.js",
     "name": "grid"
   },
   "index.html": {
-    "file": "planning-Bb4u8NJA.js",
+    "file": "planning-CTSO8aYN.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -51,7 +51,8 @@
       "src/pages/GridPage.tsx",
       "src/pages/GridPage.tsx",
       "src/pages/Calibration.tsx",
-      "src/pages/Protocols.tsx"
+      "src/pages/Protocols.tsx",
+      "src/pages/RecordsPage.tsx"
     ],
     "assets": [
       "assets/poppins-400-cpxAROuN.woff2",
@@ -77,60 +78,73 @@
     "src": "src/assets/fonts/poppins-700.woff2"
   },
   "src/pages/Calibration.tsx": {
-    "file": "chunks/Calibration-Cw-TX2eP.js",
+    "file": "chunks/Calibration-DZH8LFW_.js",
     "name": "Calibration",
     "src": "src/pages/Calibration.tsx",
     "isDynamicEntry": true,
     "imports": [
       "index.html",
-      "_PlanningFilters-RzS-uxoT.js",
-      "_KpiCard-rUsVeMhb.js",
-      "_card-DL7EtY1q.js",
-      "_grid-DAdzgk1E.js"
+      "_PlanningFilters-BJmQ8dj-.js",
+      "_KpiCard-SNjTboge.js",
+      "_card-DLKqT7NQ.js",
+      "_grid-BbzVbnVw.js"
     ]
   },
   "src/pages/Dashboard.tsx": {
-    "file": "chunks/Dashboard-Ck52nFuM.js",
+    "file": "chunks/Dashboard-CAbUpApy.js",
     "name": "Dashboard",
     "src": "src/pages/Dashboard.tsx",
     "isDynamicEntry": true,
     "imports": [
       "index.html",
-      "_PlanningFilters-RzS-uxoT.js",
-      "_KpiCard-rUsVeMhb.js",
-      "_card-DL7EtY1q.js",
-      "_ScrollTable-DucP4eAe.js",
-      "_grid-DAdzgk1E.js"
+      "_PlanningFilters-BJmQ8dj-.js",
+      "_KpiCard-SNjTboge.js",
+      "_card-DLKqT7NQ.js",
+      "_ScrollTable-DKbhwC7f.js",
+      "_grid-BbzVbnVw.js"
     ]
   },
   "src/pages/GridPage.tsx": {
-    "file": "chunks/GridPage-CQHg9opP.js",
+    "file": "chunks/GridPage-Bj09F0IH.js",
     "name": "GridPage",
     "src": "src/pages/GridPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "index.html",
-      "_PlanningFilters-RzS-uxoT.js",
-      "_ScrollTable-DucP4eAe.js",
-      "_dialog-1jMjdACp.js",
-      "_grid-DAdzgk1E.js"
+      "_PlanningFilters-BJmQ8dj-.js",
+      "_ScrollTable-DKbhwC7f.js",
+      "_dialog--uNnTvgI.js",
+      "_grid-BbzVbnVw.js"
     ]
   },
   "src/pages/Protocols.tsx": {
-    "file": "chunks/Protocols-g21LalBu.js",
+    "file": "chunks/Protocols-ohAbDqZ3.js",
     "name": "Protocols",
     "src": "src/pages/Protocols.tsx",
     "isDynamicEntry": true,
     "imports": [
       "index.html",
-      "_PlanningFilters-RzS-uxoT.js",
-      "_ScrollTable-DucP4eAe.js",
-      "_dialog-1jMjdACp.js",
-      "_card-DL7EtY1q.js"
+      "_PlanningFilters-BJmQ8dj-.js",
+      "_ScrollTable-DKbhwC7f.js",
+      "_dialog--uNnTvgI.js",
+      "_card-DLKqT7NQ.js"
+    ]
+  },
+  "src/pages/RecordsPage.tsx": {
+    "file": "chunks/RecordsPage-CLLasa9e.js",
+    "name": "RecordsPage",
+    "src": "src/pages/RecordsPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_PlanningFilters-BJmQ8dj-.js",
+      "_ScrollTable-DKbhwC7f.js",
+      "_card-DLKqT7NQ.js",
+      "_dialog--uNnTvgI.js"
     ]
   },
   "style.css": {
-    "file": "planning-3M3SZ3HH.css",
+    "file": "planning-vpFMPTSm.css",
     "src": "style.css"
   }
 }

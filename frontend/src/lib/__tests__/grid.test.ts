@@ -146,3 +146,31 @@ describe("crops", () => {
     expect(markUrl("spray-roses", true)).toMatch(/logo_spray-roses_loader\.svg$/);
   });
 });
+
+import { cropYearMonths } from "@/lib/sfbudget";
+import { RECORDS } from "@/pages/RecordsPage";
+
+describe("summer flower budget", () => {
+  it("lays months into the Sep-Aug crop year and ignores other years", () => {
+    const labels = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
+    const months = [
+      { parent: "B1", year: 2026, month: 9, stems: 100, value: 10 },
+      { parent: "B1", year: 2027, month: 2, stems: 50, value: 5 },
+      { parent: "B1", year: 2027, month: 9, stems: 999, value: 99 }, // next crop year
+      { parent: "B2", year: 2026, month: 9, stems: 7, value: 1 }, // filtered out
+    ];
+    const r = cropYearMonths(months, 2026, (p) => p === "B1", labels);
+    expect(r.stems[0]).toBe(100);
+    expect(r.stems[5]).toBe(50);
+    expect(r.stems.reduce((a, b) => a + b, 0)).toBe(150);
+    expect(r.value[0]).toBe(10);
+  });
+  it("every record page is routed, links to a classic screen and lists its own doctype", () => {
+    RECORDS.forEach((c) => {
+      expect(CLASSIC[c.view]).toMatch(/^\/desk\//);
+      expect(NAV.some((g) => g.items.some((i) => i.view === c.view))).toBe(true);
+      expect(c.cols.length).toBeGreaterThan(2);
+    });
+    expect(RECORDS.map((c) => c.doctype)).toContain("Summer Flower Budget");
+  });
+});

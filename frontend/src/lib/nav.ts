@@ -7,7 +7,13 @@ import {
   Layers,
   LayoutDashboard,
   Map as MapIcon,
+  ClipboardList,
+  Layers3,
   NotebookPen,
+  Route as RouteIcon,
+  ShoppingCart,
+  TrendingUp,
+  Wallet,
   Table2,
   type LucideIcon,
 } from "lucide-react";
@@ -46,6 +52,17 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
+    label: "Summer flowers",
+    items: [
+      { label: "Market Demand", icon: TrendingUp, view: "market-demand" },
+      { label: "Production Plans", icon: ClipboardList, view: "production-plans" },
+      { label: "Season Plans", icon: Layers3, view: "season-plans" },
+      { label: "Budgets", icon: Wallet, view: "budgets" },
+      { label: "Procurement", icon: ShoppingCart, view: "procurement" },
+      { label: "Material Routes", icon: RouteIcon, view: "routes" },
+    ],
+  },
+  {
     // Owned by upande_production: link out, do not rebuild.
     label: "Production",
     items: [
@@ -68,4 +85,10 @@ export const CLASSIC: Record<View, string> = {
   lifetime: "/budget-forecast#lifetime",
   calibration: "/budget-forecast#calibrate",
   protocols: "/desk/crop-protocol",
+  "market-demand": "/desk/summer-flower-market-demand",
+  "production-plans": "/desk/summer-flower-production-plan",
+  "season-plans": "/desk/summer-flower-season-plan",
+  budgets: "/desk/summer-flower-budget",
+  procurement: "/desk/summer-flower-procurement-plan",
+  routes: "/desk/material-route",
 };
