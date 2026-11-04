@@ -1,0 +1,136 @@
+{
+  "_KpiCard-D5WkhB78.js": {
+    "file": "chunks/KpiCard-D5WkhB78.js",
+    "name": "KpiCard",
+    "imports": [
+      "index.html",
+      "_card-CYj4sMZs.js"
+    ]
+  },
+  "_PlanningFilters-D8tYd5Fz.js": {
+    "file": "chunks/PlanningFilters-D8tYd5Fz.js",
+    "name": "PlanningFilters",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "_ScrollTable-qzEAJvA3.js": {
+    "file": "chunks/ScrollTable-qzEAJvA3.js",
+    "name": "ScrollTable",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "_card-CYj4sMZs.js": {
+    "file": "chunks/card-CYj4sMZs.js",
+    "name": "card",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "_dialog-DhRunYpk.js": {
+    "file": "chunks/dialog-DhRunYpk.js",
+    "name": "dialog",
+    "imports": [
+      "index.html",
+      "_PlanningFilters-D8tYd5Fz.js"
+    ]
+  },
+  "_grid-DAdzgk1E.js": {
+    "file": "chunks/grid-DAdzgk1E.js",
+    "name": "grid"
+  },
+  "index.html": {
+    "file": "planning-CRLm1s24.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/pages/Dashboard.tsx",
+      "src/pages/GridPage.tsx",
+      "src/pages/GridPage.tsx",
+      "src/pages/GridPage.tsx",
+      "src/pages/Calibration.tsx",
+      "src/pages/Protocols.tsx"
+    ],
+    "assets": [
+      "assets/poppins-400-cpxAROuN.woff2",
+      "assets/poppins-500-C8OXljZJ.woff2",
+      "assets/poppins-600-zEkxB9Mr.woff2",
+      "assets/poppins-700-Qrb0O0WB.woff2"
+    ]
+  },
+  "src/assets/fonts/poppins-400.woff2": {
+    "file": "assets/poppins-400-cpxAROuN.woff2",
+    "src": "src/assets/fonts/poppins-400.woff2"
+  },
+  "src/assets/fonts/poppins-500.woff2": {
+    "file": "assets/poppins-500-C8OXljZJ.woff2",
+    "src": "src/assets/fonts/poppins-500.woff2"
+  },
+  "src/assets/fonts/poppins-600.woff2": {
+    "file": "assets/poppins-600-zEkxB9Mr.woff2",
+    "src": "src/assets/fonts/poppins-600.woff2"
+  },
+  "src/assets/fonts/poppins-700.woff2": {
+    "file": "assets/poppins-700-Qrb0O0WB.woff2",
+    "src": "src/assets/fonts/poppins-700.woff2"
+  },
+  "src/pages/Calibration.tsx": {
+    "file": "chunks/Calibration-IKN5t-SK.js",
+    "name": "Calibration",
+    "src": "src/pages/Calibration.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_PlanningFilters-D8tYd5Fz.js",
+      "_KpiCard-D5WkhB78.js",
+      "_card-CYj4sMZs.js",
+      "_grid-DAdzgk1E.js"
+    ]
+  },
+  "src/pages/Dashboard.tsx": {
+    "file": "chunks/Dashboard-oqcXy6Ug.js",
+    "name": "Dashboard",
+    "src": "src/pages/Dashboard.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_PlanningFilters-D8tYd5Fz.js",
+      "_KpiCard-D5WkhB78.js",
+      "_card-CYj4sMZs.js",
+      "_ScrollTable-qzEAJvA3.js",
+      "_grid-DAdzgk1E.js"
+    ]
+  },
+  "src/pages/GridPage.tsx": {
+    "file": "chunks/GridPage-BVM3aC4-.js",
+    "name": "GridPage",
+    "src": "src/pages/GridPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_PlanningFilters-D8tYd5Fz.js",
+      "_ScrollTable-qzEAJvA3.js",
+      "_dialog-DhRunYpk.js",
+      "_grid-DAdzgk1E.js"
+    ]
+  },
+  "src/pages/Protocols.tsx": {
+    "file": "chunks/Protocols-DONpZLxR.js",
+    "name": "Protocols",
+    "src": "src/pages/Protocols.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_PlanningFilters-D8tYd5Fz.js",
+      "_ScrollTable-qzEAJvA3.js",
+      "_dialog-DhRunYpk.js",
+      "_card-CYj4sMZs.js"
+    ]
+  },
+  "style.css": {
+    "file": "planning-gT1p-Wfi.css",
+    "src": "style.css"
+  }
+}
