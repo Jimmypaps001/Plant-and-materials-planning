@@ -1,6 +1,5 @@
-"""The generated mark carries valid motion metadata (keyframes in order, selectors present)."""
+"""The generated marks are pure-CSS: the desk tile plays once and rests, the loader loops."""
 
-import json
 import re
 import unittest
 from pathlib import Path
@@ -8,27 +7,37 @@ from pathlib import Path
 IMAGES = Path(__file__).resolve().parents[1] / "public" / "images"
 
 
+def _animations(svg):
+    return re.findall(r"animation: ([\w-]+) (\d+)ms [^;]*? (infinite|\d+) both;", svg)
+
+
 class TestLogo(unittest.TestCase):
-    def _svg(self, name):
-        return (IMAGES / name).read_text()
+    def test_desk_svg_plays_once_and_rests(self):
+        svg = (IMAGES / "crop_material_planning_logo.svg").read_text()
+        anims = _animations(svg)
+        self.assertTrue(anims)
+        self.assertTrue(all(a[2] == "1" for a in anims), "desk tile must play once")
+        self.assertNotIn("infinite", svg)
+        self.assertNotIn("<metadata", svg)
+        self.assertNotIn("<script", svg)
+        self.assertIn("prefers-reduced-motion: reduce", svg)
+        # arrow and scene exist, and the scene starts hidden so the end state is the plain mark
+        self.assertIn('class="arrow"', svg)
+        self.assertIn('class="scene"', svg)
 
-    def test_desk_svg_motion_metadata(self):
-        svg = self._svg("crop_material_planning_logo.svg")
-        m = re.search(r'<metadata id="crop-material-planning-motion">(.*?)</metadata>', svg, re.S)
-        self.assertTrue(m, "motion metadata missing")
-        spec = json.loads(m.group(1))
-        self.assertGreater(spec["enterMs"], 0)
-        self.assertGreater(spec["loopMs"], 0)
-        for tracks in (spec["enter"], spec["loop"]):
-            self.assertTrue(tracks)
-            for t in tracks:
-                offs = [f["offset"] for f in t["frames"]]
-                self.assertTrue(all(0 <= o <= 1 for o in offs), t["sel"])
-                self.assertEqual(offs, sorted(offs), t["sel"])
-                # every animated selector exists in the artwork
-                self.assertIn(t["sel"].lstrip(".").split(" ")[0], svg, t["sel"])
+    def test_keyframes_ordered_and_end_at_rest(self):
+        svg = (IMAGES / "crop_material_planning_logo.svg").read_text()
+        blocks = re.findall(r"@keyframes ([\w-]+) \{(.*?)\n    \}", svg, re.S)
+        self.assertTrue(blocks)
+        for name, body in blocks:
+            pcts = [float(x) for x in re.findall(r"([\d.]+)% \{", body)]
+            self.assertEqual(pcts, sorted(pcts), name)
+            self.assertEqual((pcts[0], pcts[-1]), (0.0, 100.0), name)
+            steps = re.findall(r"([\d.]+)% \{ ([^}]*)\}", body)
+            first, last = steps[0][1], steps[-1][1]
+            self.assertEqual(first, last, f"{name} must end where it began (rest)")
 
-    def test_loader_is_pure_css(self):
-        svg = self._svg("crop_material_planning_logo_loader.svg")
-        self.assertIn("@keyframes", svg)
+    def test_loader_loops(self):
+        svg = (IMAGES / "crop_material_planning_logo_loader.svg").read_text()
+        self.assertIn("infinite", svg)
         self.assertNotIn("<metadata", svg)
