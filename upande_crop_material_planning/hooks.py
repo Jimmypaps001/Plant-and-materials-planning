@@ -237,6 +237,49 @@ required_apps = ["upande_production"]
 # 	}
 # ]
 
+# Planning ownership of the former upande_agriculture endpoints; old dotted
+# paths (mobile app, desk JS) keep resolving.
+override_whitelisted_methods = {
+	"upande_agriculture.api.get_week_summary": "upande_crop_material_planning.api.get_week_summary",
+	"upande_agriculture.api.regenerate_projection": "upande_crop_material_planning.api.regenerate_projection",
+	"upande_agriculture.api.get_budget_grid": "upande_crop_material_planning.api.get_budget_grid",
+	"upande_agriculture.api.update_projection_week": "upande_crop_material_planning.api.update_projection_week",
+	"upande_agriculture.api.bulk_update_projection_weeks": "upande_crop_material_planning.api.bulk_update_projection_weeks",
+	"upande_agriculture.api.set_projection_source": "upande_crop_material_planning.api.set_projection_source",
+	"upande_agriculture.api.bulk_update_aggregated_weeks": "upande_crop_material_planning.api.bulk_update_aggregated_weeks",
+	"upande_agriculture.api.bulk_apply_formula": "upande_crop_material_planning.api.bulk_apply_formula",
+	"upande_agriculture.api.bulk_set_aggregated_source": "upande_crop_material_planning.api.bulk_set_aggregated_source",
+	"upande_agriculture.api.copy_aggregated_row": "upande_crop_material_planning.api.copy_aggregated_row",
+	"upande_agriculture.api.get_prior_year_actuals": "upande_crop_material_planning.api.get_prior_year_actuals",
+	"upande_agriculture.budget.generate_budget": "upande_crop_material_planning.budget.generate_budget",
+	"upande_agriculture.budget.generate_all_budgets": "upande_crop_material_planning.budget.generate_all_budgets",
+	"upande_agriculture.budget.budget_by_grade": "upande_crop_material_planning.budget.budget_by_grade",
+	"upande_agriculture.budget.budget_week_map": "upande_crop_material_planning.budget.budget_week_map",
+	"upande_agriculture.budget.revise_forecast": "upande_crop_material_planning.budget.revise_forecast",
+	"upande_agriculture.budget.calibrate_variety": "upande_crop_material_planning.budget.calibrate_variety",
+	"upande_agriculture.budget.grid_payload": "upande_crop_material_planning.budget.grid_payload",
+	"upande_agriculture.budget.set_forecast_cell": "upande_crop_material_planning.budget.set_forecast_cell",
+	"upande_agriculture.budget.revise_blocks": "upande_crop_material_planning.budget.revise_blocks",
+	"upande_agriculture.budget.cell_history": "upande_crop_material_planning.budget.cell_history",
+	"upande_agriculture.budget.set_budget_cell": "upande_crop_material_planning.budget.set_budget_cell",
+	"upande_agriculture.mobile.api.getProductionProjection": "upande_crop_material_planning.mobile.api.getProductionProjection",
+	"upande_agriculture.mobile.api.updateRevisedForecast": "upande_crop_material_planning.mobile.api.updateRevisedForecast",
+	"upande_agriculture.upande_agriculture.doctype.production_forecast.production_forecast.refresh_actuals": "upande_crop_material_planning.upande_crop_material_planning.doctype.production_forecast.production_forecast.refresh_actuals",
+}
+
+doc_events = {
+	"Stock Entry": {
+		"on_submit": "upande_crop_material_planning.controllers.stock_entry_forecast_actuals",
+		"on_cancel": "upande_crop_material_planning.controllers.stock_entry_forecast_actuals",
+	},
+}
+
+scheduler_events = {
+	"daily": [
+		"upande_crop_material_planning.scheduled.rollup_actuals",
+	],
+}
+
 # Authentication and authorization
 # --------------------------------
 
