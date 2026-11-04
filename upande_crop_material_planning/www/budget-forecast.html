@@ -1251,6 +1251,7 @@ viewBox='0 0 24 24' fill='none' stroke='%236b6862' stroke-width='2.4' stroke-lin
     <div class="sb-sel"><small>Selected</small><b id="sel-stems">—</b><span id="sel-meta"></span></div>
   </nav>
   <div class="sidebar__foot">
+    <a class="snav" id="to-react" href="/planning_app" title="Open this screen in the new planning app"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg><span>New planning app</span></a>
     <a class="snav" href="/app"><svg viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg><span>Back to Desk</span></a>
     <div class="sidebar__user"><div class="avatar" id="sb-avatar">·</div><span id="sb-user"></span></div>
     <button class="snav" id="sb-collapse"><svg viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg><span>Collapse</span></button>
@@ -2771,6 +2772,9 @@ function applyPrefs() {
 // fetch their own data independently of the grid's STATE (see mapLoad() /
 // loadPlan()), so it's safe to trigger them here, before load() resolves.
 function applyView(v) {
+  const toReact = document.getElementById("to-react");
+  if (toReact) toReact.href = "/planning_app#/" + ({ dashboard: "dashboard", budget: "budget", forecast: "forecast",
+    lifetime: "lifetime", calibrate: "calibration" }[v] || "dashboard");
   document.querySelectorAll(".snav[data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
   const dash = v === "dashboard", isMap = v === "map", isPlan = v === "plan";
   $("#v-dashboard").classList.toggle("on", dash);
