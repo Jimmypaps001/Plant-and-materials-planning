@@ -9,11 +9,13 @@ from upande_crop_material_planning import budget
 from upande_crop_material_planning.tests import default_uom, make_warehouse
 
 
-class TestBudget(FrappeTestCase):
+class _BudgetFixture:
+    """Builds its own warehouse, item, protocol and cycle; relies on no site data."""
     HOUSE = "TEST GH BUDGET"
     VARIETY = "TEST-BUDGET-VARIETY"
+    PLANTING = datetime.date(2026, 1, 5)
 
-    def setUp(self):
+    def build_fixture(self):
         self.house = make_warehouse(self.HOUSE)
         if not frappe.db.exists("Item", self.VARIETY):
             frappe.get_doc({
@@ -22,7 +24,8 @@ class TestBudget(FrappeTestCase):
                 "stock_uom": default_uom(),
             }).insert(ignore_permissions=True, ignore_mandatory=True)
         self.proto = self._protocol()
-        self._cycle()
+        self.cycle_doc = self._cycle(planting=self.PLANTING)
+        return self.cycle_doc
 
     def _protocol(self, name="TEST-BUDGET-PROTO"):
         values = {
@@ -52,6 +55,11 @@ class TestBudget(FrappeTestCase):
             "variety": self.VARIETY, "crop_protocol": self.proto,
             "planting_date": planting, "qty_planted": qty, "status": "Active",
         }).insert(ignore_permissions=True)
+
+
+class TestBudget(_BudgetFixture, FrappeTestCase):
+    def setUp(self):
+        self.build_fixture()
 
     def test_generates_a_mature_year_at_the_steady_rate(self):
         res = budget.generate_budget(self.house, self.VARIETY, 2028)
@@ -370,7 +378,7 @@ class TestWeekSpan(FrappeTestCase):
                          budget.MAX_SPAN_WEEKS)
 
 
-class TestForecastRoundTrip(FrappeTestCase):
+class TestForecastRoundTrip(_BudgetFixture, FrappeTestCase):
     """The grid used to write forecasts and never read them back."""
 
     def test_grade_is_normalised(self):
@@ -385,12 +393,8 @@ class TestForecastRoundTrip(FrappeTestCase):
     def test_seeded_rows_are_not_reported_as_revisions(self):
         # Opening a window writes forecast == budget for every week. Those are
         # scaffolding; only a week somebody changed counts as a revision.
-        house = frappe.db.get_value("Crop Cycle", {"status": ("!=", "Ended")}, "greenhouse")
-        if not house:
-            self.skipTest("no crop cycles on this site")
-        cycle = frappe.db.get_value(
-            "Crop Cycle", {"greenhouse": house, "status": ("!=", "Ended")},
-            ["name", "variety"], as_dict=True)
+        cycle = self.build_fixture()
+        house = cycle.greenhouse
         year = 2031  # a year with no other fixtures in play
         r = budget.revise_forecast(house, cycle.variety, year, 10, 4)
         try:
@@ -415,12 +419,8 @@ class TestForecastRoundTrip(FrappeTestCase):
                 frappe.delete_doc("Production Forecast", n, force=1, ignore_permissions=True)
 
     def test_narrowing_keeps_grade_rows_for_surviving_weeks(self):
-        house = frappe.db.get_value("Crop Cycle", {"status": ("!=", "Ended")}, "greenhouse")
-        if not house:
-            self.skipTest("no crop cycles on this site")
-        cycle = frappe.db.get_value(
-            "Crop Cycle", {"greenhouse": house, "status": ("!=", "Ended")},
-            ["name", "variety"], as_dict=True)
+        cycle = self.build_fixture()
+        house = cycle.greenhouse
         year = 2032
         budget.revise_forecast(house, cycle.variety, year, 10, 8)
         try:
@@ -442,32 +442,39 @@ class TestForecastRoundTrip(FrappeTestCase):
                 frappe.delete_doc("Production Forecast", n, force=1, ignore_permissions=True)
 
 
-class TestBudgetOverrides(FrappeTestCase):
+class TestBudgetOverrides(_BudgetFixture, FrappeTestCase):
     """A month typed on the Budget view must read back as the same number,
     in the same month. It used to round-drift and straddle two months."""
 
+    HOUSE = "TEST GH OVERRIDES"      # own house and variety: no cycles shared with TestBudget
+    VARIETY = "TEST-OVERRIDE-VARIETY"
+    PLANTING = datetime.date(2024, 1, 8)  # mature in every year the tests touch
+    MONTHS = {"Jan": 1, "Feb": 2, "Sep": 9, "Dec": 12}
+
+    @staticmethod
+    def _year_of(cal_month):
+        # Mirrors set_budget_cell: the budget runs Sep-Aug, anchored on today.
+        today = datetime.date.today()
+        return today.year if cal_month >= 9 else today.year + (0 if today.month < 9 else 1)
+
     def setUp(self):
-        # Pick a block that already has a budget — set_budget_cell overrides a
-        # Production Projection, so one has to exist. Which cycle sorts first
-        # depends on the site's data, so do not rely on it.
-        name = frappe.db.sql("""
-            SELECT cc.name FROM `tabCrop Cycle` cc
-            JOIN `tabProduction Projection` pp
-              ON pp.greenhouse = cc.greenhouse AND pp.variety = cc.variety
-            WHERE cc.status != 'Ended' LIMIT 1""")
-        if not name:
-            self.skipTest("no crop cycle with a generated budget on this site")
+        # set_budget_cell overrides a Production Projection, so build the
+        # fixture and generate the budget years it will write into first.
+        cycle = self.build_fixture()
         self.cycle = frappe.db.get_value(
-            "Crop Cycle", name[0][0], ["name", "greenhouse", "variety"], as_dict=True)
+            "Crop Cycle", cycle.name, ["name", "greenhouse", "variety"], as_dict=True)
+        for year in {self._year_of(m) for m in self.MONTHS.values()}:
+            budget.generate_budget(self.cycle.greenhouse, self.cycle.variety, year)
         frappe.db.sql("UPDATE `tabProjection Week` SET manual_override = 0")
 
     def tearDown(self):
         frappe.db.sql("UPDATE `tabProjection Week` SET manual_override = 0")
         frappe.db.commit()
 
-    def _read(self):
+    def _read(self, month):
+        year = self._year_of(self.MONTHS[month])
         got = budget.manual_month_overrides(
-            [(self.cycle.greenhouse, self.cycle.variety, 2026)])
+            [(self.cycle.greenhouse, self.cycle.variety, year)])
         return got.get((self.cycle.greenhouse, self.cycle.variety), {})
 
     def test_month_reads_back_exactly(self):
@@ -475,12 +482,12 @@ class TestBudgetOverrides(FrappeTestCase):
         for month, value in (("Dec", 54321), ("Feb", 99999), ("Sep", 7)):
             with self.subTest(month=month):
                 budget.set_budget_cell(self.cycle.name, month, value)
-                self.assertEqual(self._read().get(month), value)
+                self.assertEqual(self._read(month).get(month), value)
                 frappe.db.sql("UPDATE `tabProjection Week` SET manual_override = 0")
 
     def test_month_does_not_bleed_into_its_neighbour(self):
         budget.set_budget_cell(self.cycle.name, "Dec", 54321)
-        got = self._read()
+        got = self._read("Dec")
         self.assertEqual(list(got), ["Dec"], f"override leaked across months: {got}")
 
     def test_weeks_are_assigned_by_their_thursday(self):
@@ -496,15 +503,13 @@ class TestBudgetOverrides(FrappeTestCase):
                 self.assertEqual(dt.date.fromisocalendar(2026, w, 4).month, cal_month)
 
 
-class TestForecastHistory(FrappeTestCase):
+class TestForecastHistory(_BudgetFixture, FrappeTestCase):
     """A planner must be able to see what a cell used to say, and why."""
 
     def setUp(self):
+        cycle = self.build_fixture()
         self.cycle = frappe.db.get_value(
-            "Crop Cycle", {"status": ("!=", "Ended")},
-            ["name", "greenhouse", "variety"], as_dict=True)
-        if not self.cycle:
-            self.skipTest("no crop cycles on this site")
+            "Crop Cycle", cycle.name, ["name", "greenhouse", "variety"], as_dict=True)
         self.year = 2033
         budget.revise_forecast(self.cycle.greenhouse, self.cycle.variety, self.year, 20, 4)
 
