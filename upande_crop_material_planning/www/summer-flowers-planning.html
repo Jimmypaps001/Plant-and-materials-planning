@@ -1347,7 +1347,7 @@ table.pl-t tr.ls-arrive td:first-child{box-shadow:inset 3px 0 0 var(--violet)}
   // Where the material comes from and when it has to be ordered. Its own module
   // because it answers a different question from the plan: not what to grow, but
   // what to buy to be able to grow it.
-  const TS = "upande_crop_material_planning.summer_flowers.tc_supply.";
+  const TS = "upande_production.summer_flowers.tc_supply.";
   const callRl2 = (m, a) => new Promise((res, rej) => {
     let done = false; const fin = (f, v) => { if (!done) { done = true; f(v); } };
     setTimeout(() => fin(rej, new Error("Timed out: " + m)), 45000);
@@ -1385,7 +1385,7 @@ table.pl-t tr.ls-arrive td:first-child{box-shadow:inset 3px 0 0 var(--violet)}
     } catch (e) { fin(rej, e); }
   });
 
-  const SRC = "upande_crop_material_planning.summer_flowers.sourcing.";
+  const SRC = "upande_production.summer_flowers.sourcing.";
   const callSrc = (m, a) => new Promise((res, rej) => {
     let done = false; const fin = (f, v) => { if (!done) { done = true; f(v); } };
     setTimeout(() => fin(rej, new Error("Timed out: " + m)), 45000);

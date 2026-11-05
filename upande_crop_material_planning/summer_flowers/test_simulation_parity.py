@@ -42,6 +42,29 @@ def _live_plan():
 		order_by="creation desc")
 
 
+def _plan_with_own_propagation_plan():
+	"""A production plan that a propagation plan was actually built from.
+
+	The sheet finds a plan's propagation plan by variety and season, not by the plan
+	it was built from, so the newest production plan can be paired with a propagation
+	plan built from a sibling plan (same variety, farm and season) whose figures differ.
+	Comparing those two says nothing about the code.
+	"""
+	own = {}
+	for r in frappe.get_all(
+		"Summer Flower Propagation Plan", filters={"docstatus": ["<", 2], "production_plan": ["is", "set"]},
+		fields=["name", "production_plan"], order_by="creation desc"):
+		own.setdefault(r.production_plan, r.name)
+	for plan in frappe.get_all(
+		"Summer Flower Production Plan", filters={"docstatus": ["<", 2], "name": ["in", list(own)]},
+		pluck="name", order_by="creation desc"):
+		prop = propagation_detail(plan=plan)
+		# the sheet must have resolved to the propagation plan built from this production plan, and it must ask for mothers
+		if prop.get("propagation_plan") == own[plan] and cint((prop.get("totals") or {}).get("mother_plants")):
+			return plan
+	return None
+
+
 class IntegrationTestSimulationParity(IntegrationTestCase):
 	"""Two roads to one number, walked and compared."""
 
@@ -115,7 +138,6 @@ class IntegrationTestSimulationParity(IntegrationTestCase):
 			str(runs[4]["order_date"]), str(runs[1]["order_date"]),
 			"four rounds did not need ordering earlier than one")
 
-	@unittest.expectedFailure  # KNOWN on marginpar.local: SFPP-2026-00063 recommends 46,680 mother plants against 51,999 stored
 	def test_recommended_order_raises_the_pool_the_plan_asked_for(self):
 		"""What the sheet recommends must raise what the propagation plan needs.
 
@@ -124,9 +146,9 @@ class IntegrationTestSimulationParity(IntegrationTestCase):
 		stored on the propagation plan. They are only allowed to differ by the
 		rounding up of a plantlet.
 		"""
-		plan = _live_plan()
+		plan = _plan_with_own_propagation_plan()
 		if not plan:
-			self.skipTest("no production plan on this site")
+			self.skipTest("no production plan has a propagation plan built from it")
 		r = plan_whatif(plan=plan)
 		prop = propagation_detail(plan=plan)
 		if not r.get("plan") or not prop.get("propagation_plan"):

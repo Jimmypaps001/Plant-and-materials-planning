@@ -160,16 +160,33 @@ def plans_against_demand():
 		summer_flower_production_plan as m,
 	)
 
-	checked, bad = 0, {}
+	from upande_production.summer_flowers.planning import iso_year_week, week_sequence
+
+	checked, bad, edge = 0, {}, {}
 	for r in frappe.get_all("Summer Flower Production Plan", filters={"docstatus": ("<", 2)},
-	                        fields=["name", "market_demand", "farm", "season_start_year", "total_demand_stems", "modified"]):
+	                        fields=["name", "market_demand", "farm", "season_start_year", "total_demand_stems", "modified",
+	                                "from_year", "from_week", "weeks_covered"]):
 		p = m.plan_preview(r.market_demand, r.farm, r.season_start_year)
 		checked += 1
 		if cint(p.get("demand_stems")) != cint(r.total_demand_stems):
 			md = frappe.db.get_value("Summer Flower Market Demand", r.market_demand, "modified")
-			bad[r.name] = {"stored": cint(r.total_demand_stems), "now": cint(p.get("demand_stems")),
-			               "demand_edited_since": bool(md and md > r.modified)}
-	return {"checked": checked, "disagree": bad}
+			row = {"stored": cint(r.total_demand_stems), "now": cint(p.get("demand_stems")),
+			       "demand_edited_since": bool(md and md > r.modified)}
+			# plan_preview (as in the original source) windows the register by calendar date, 1 July - 30 June, while the
+			# plan itself runs W27-W26 by ISO week: a week that straddles 1 July (or 30 June) is in the plan but not in the
+			# preview. Re-window the register by the plan's own week grid; if that gives the stored figure the difference
+			# is that boundary week, not a porting fault.
+			if r.from_year and r.from_week and r.weeks_covered:
+				grid = {(y, w) for y, w, _d in week_sequence(r.from_year, r.from_week, r.weeks_covered)}
+				d = frappe.get_cached_doc("Summer Flower Market Demand", r.market_demand)
+				aligned = sum(cint(x.demand_stems) for x in d.demand_weeks
+				              if x.week_start_date and iso_year_week(x.week_start_date) in grid)
+				row["demand_by_plan_weeks"] = aligned
+				if aligned == cint(r.total_demand_stems):
+					edge[r.name] = row
+					continue
+			bad[r.name] = row
+	return {"checked": checked, "disagree": bad, "season_edge_week": edge}
 
 
 CHECKS = (
@@ -194,5 +211,7 @@ def report():
 			print(f"{label}: ERROR {r['error']}")
 		else:
 			extra = f", {len(r['stale_placement'])} with stale placement counters" if r.get("stale_placement") else ""
+			if r.get("season_edge_week"):
+				extra += f", {len(r['season_edge_week'])} explained by the season-boundary week"
 			print(f"{label}: {r['checked']} compared, {len(r['disagree'])} disagree{extra}")
 	return out

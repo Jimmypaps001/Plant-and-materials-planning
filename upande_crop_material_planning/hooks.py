@@ -340,12 +340,12 @@ override_whitelisted_methods = {
 	"upande_summer_flowers.summer_flowers.planning_api.uproot_bed_whatif": "upande_crop_material_planning.summer_flowers.planning_api.uproot_bed_whatif",
 	"upande_summer_flowers.summer_flowers.route_backfill.run": "upande_crop_material_planning.summer_flowers.route_backfill.run",
 	"upande_summer_flowers.summer_flowers.route_methods.apply_catalogue": "upande_production.summer_flowers.route_methods.apply_catalogue",
-	"upande_summer_flowers.summer_flowers.sourcing.entry_options": "upande_crop_material_planning.summer_flowers.sourcing.entry_options",
-	"upande_summer_flowers.summer_flowers.sourcing.harvest_chain": "upande_crop_material_planning.summer_flowers.sourcing.harvest_chain",
-	"upande_summer_flowers.summer_flowers.sourcing.order_schedule": "upande_crop_material_planning.summer_flowers.sourcing.order_schedule",
-	"upande_summer_flowers.summer_flowers.sourcing.route_plan": "upande_crop_material_planning.summer_flowers.sourcing.route_plan",
-	"upande_summer_flowers.summer_flowers.tc_supply.batches_for": "upande_crop_material_planning.summer_flowers.tc_supply.batches_for",
-	"upande_summer_flowers.summer_flowers.tc_supply.tc_suppliers": "upande_crop_material_planning.summer_flowers.tc_supply.tc_suppliers",
+	"upande_summer_flowers.summer_flowers.sourcing.entry_options": "upande_production.summer_flowers.sourcing.entry_options",
+	"upande_summer_flowers.summer_flowers.sourcing.harvest_chain": "upande_production.summer_flowers.sourcing.harvest_chain",
+	"upande_summer_flowers.summer_flowers.sourcing.order_schedule": "upande_production.summer_flowers.sourcing.order_schedule",
+	"upande_summer_flowers.summer_flowers.sourcing.route_plan": "upande_production.summer_flowers.sourcing.route_plan",
+	"upande_summer_flowers.summer_flowers.tc_supply.batches_for": "upande_production.summer_flowers.tc_supply.batches_for",
+	"upande_summer_flowers.summer_flowers.tc_supply.tc_suppliers": "upande_production.summer_flowers.tc_supply.tc_suppliers",
 }
 
 doc_events = {
