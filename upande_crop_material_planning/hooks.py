@@ -93,7 +93,7 @@ fixtures = [
 # `bench install-app` marks patches.txt entries as done without running them, so the take-over of the
 # Summer Flowers planning doctypes (module + custom=0) is driven from here too. Idempotent.
 before_install = "upande_crop_material_planning.install.before_install"
-# after_install = "upande_crop_material_planning.install.after_install"
+after_install = "upande_crop_material_planning.install.after_install"
 
 # Uninstallation
 # ------------

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime
 import unittest
+import unittest.mock
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
@@ -19,6 +20,13 @@ from upande_crop_material_planning import api
 
 
 class TestApi(FrappeTestCase):
+    # Code under test (scheduled.rollup_actuals, bulk_set_aggregated_source) commits; keep the fixtures out
+    # of the site by turning commit into a no-op for each test and rolling back afterwards.
+    def setUp(self):
+        patcher = unittest.mock.patch.object(frappe.db, "commit", lambda *a, **k: None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.addCleanup(frappe.db.rollback)
     # ------------------------------------------------------------------
     # Shared fixtures (re-use helpers from test_controllers where possible)
     # ------------------------------------------------------------------

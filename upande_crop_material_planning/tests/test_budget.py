@@ -470,8 +470,7 @@ class TestBudgetOverrides(_BudgetFixture, FrappeTestCase):
         frappe.db.sql("UPDATE `tabProjection Week` SET manual_override = 0")
 
     def tearDown(self):
-        frappe.db.sql("UPDATE `tabProjection Week` SET manual_override = 0")
-        frappe.db.commit()
+        frappe.db.rollback()
 
     def _read(self, month):
         year = self._year_of(self.MONTHS[month])
@@ -519,7 +518,7 @@ class TestForecastHistory(_BudgetFixture, FrappeTestCase):
         for n in frappe.db.get_all("Production Forecast",
                                    {"forecast_year": self.year}, pluck="name"):
             frappe.delete_doc("Production Forecast", n, force=1, ignore_permissions=True)
-        frappe.db.commit()
+        frappe.db.rollback()
 
     def test_history_reports_the_live_revision_and_reason(self):
         budget.set_forecast_cell(self.cycle.name, "__all__", 21, 5000,

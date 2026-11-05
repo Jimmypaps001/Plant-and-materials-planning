@@ -16,7 +16,13 @@ PAGES = ["production_budget"]
 
 
 def execute():
-	if not frappe.db.exists("Module Def", NEW_MODULE):
+	take_over(create_module_def=True)
+
+
+def take_over(create_module_def=False):
+	"""Idempotent. before_install calls it with create_module_def=False: install_app's add_module_defs
+	inserts the Module Def right after and raises on a duplicate."""
+	if create_module_def and not frappe.db.exists("Module Def", NEW_MODULE):
 		frappe.get_doc({
 			"doctype": "Module Def",
 			"module_name": NEW_MODULE,
