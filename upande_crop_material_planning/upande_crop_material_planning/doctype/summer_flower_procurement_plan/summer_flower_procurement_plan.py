@@ -122,7 +122,7 @@ class SummerFlowerProcurementPlan(Document):
 		for row in self.get("purchase_allocation") or []:
 			if not row.entry_stage:
 				row.entry_stage = only or self.main_entry_stage()
-			if row.supplier and not cint(row.lead_weeks):
+			if row.supplier and not cint(row.lead_weeks) and frappe.get_meta("Supplier").has_field("custom_sf_propagation_weeks"):
 				row.lead_weeks = cint(frappe.db.get_value(
 					"Supplier", row.supplier, "custom_sf_propagation_weeks"))
 			if not cint(row.lead_weeks):
@@ -281,14 +281,13 @@ class SummerFlowerProcurementPlan(Document):
 
 			if outside:
 				r.propagation_unit = None
-				sup = frappe.db.get_value(
-					"Supplier", r.supplier,
-					["custom_sf_propagation_weeks", "custom_sf_rate_per_plant"],
-					as_dict=True) if r.supplier else None
+				smeta = frappe.get_meta("Supplier")
+				sfields = [f for f in ("custom_sf_propagation_weeks", "custom_sf_rate_per_plant") if smeta.has_field(f)]
+				sup = frappe.db.get_value("Supplier", r.supplier, sfields, as_dict=True) if r.supplier and sfields else None
 				if sup and not cint(r.lead_weeks):
-					r.lead_weeks = cint(sup.custom_sf_propagation_weeks)
+					r.lead_weeks = cint(sup.get("custom_sf_propagation_weeks"))
 				if sup and not flt(r.rate_per_plant):
-					r.rate_per_plant = flt(sup.custom_sf_rate_per_plant)
+					r.rate_per_plant = flt(sup.get("custom_sf_rate_per_plant"))
 				if not r.deliver_to:
 					r.deliver_to = receiving
 				r.ready_basis = _(

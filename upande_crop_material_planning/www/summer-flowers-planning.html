@@ -8699,8 +8699,8 @@ table.pl-t tr.ls-arrive td:first-child{box-shadow:inset 3px 0 0 var(--violet)}
     // narrows the plan list, and choosing a year moves to that year's plan.
     function fillPlanPickers() {
       const all = (S.plans && S.plans.plans) || [];
-      const planYears = [...new Set(all.map((p) => p.season_start_year).filter(Boolean))]
-        .map(Number);
+      // season_start_year may be stored as "2026-2027" as well as 2026: take the year it starts in.
+      const planYears = [...new Set(all.map((p) => parseInt(p.season_start_year, 10)).filter(Boolean))];
       // Every year the page can be scoped to, not only the ones already planned.
       // A register covering four years with one of them planned gave this control
       // a single option, and a single option disables it -- which is how it kept

@@ -73,6 +73,8 @@ def _pull_context(doc):
 
 def _default_store(doc):
 	"""The farm's own chemical or fertiliser store, when the request type says which."""
+	if not frappe.get_meta("Material Request").has_field("custom_request_type"):
+		return None
 	field = {"Chemical Issuing": "custom_chemical_store",
 	         "Fertiliser Issuing": "custom_fertilizer_store"}.get(
 		doc.get("custom_request_type"))
@@ -136,6 +138,8 @@ def _stock(item, warehouse):
 
 def _check_item_groups(doc):
 	"""A fertiliser request should not quietly carry chemicals."""
+	if not frappe.get_meta("Material Request").has_field("custom_request_type"):
+		return
 	allowed = GROUP_FOR_TYPE.get(doc.get("custom_request_type"))
 	if not allowed:
 		return
@@ -205,13 +209,15 @@ def build_input_request(block=None, crop_cycle=None, request_type=None,
 	if not rows:
 		frappe.throw(_("Add at least one item, or name a request to copy from."))
 
+	meta = frappe.get_meta("Material Request")
 	mr = frappe.new_doc("Material Request")
 	mr.material_request_type = "Purchase"
 	mr.company = company
 	mr.transaction_date = getdate()
 	mr.schedule_date = getdate(schedule_date or frappe.utils.nowdate())
 	mr.custom_farm = farm
-	mr.custom_request_type = request_type
+	if meta.has_field("custom_request_type"):
+		mr.custom_request_type = request_type
 	mr.custom_business_unit = business_unit
 	mr.custom_sf_block = block
 	mr.custom_sf_crop_cycle = crop_cycle
@@ -263,8 +269,9 @@ def input_requests(block=None, farm=None, crop_cycle=None, docstatus=None):
 		"Material Request", filters=f,
 		fields=["name", "status", "docstatus", "transaction_date", "schedule_date",
 		        "custom_sf_period_to", "custom_sf_block", "custom_sf_crop_cycle",
-		        "custom_sf_area_ha", "custom_request_type", "custom_farm",
-		        "set_warehouse", "per_ordered", "per_received", "company"],
+		        "custom_sf_area_ha", "custom_farm",
+		        "set_warehouse", "per_ordered", "per_received", "company"]
+		        + (["custom_request_type"] if frappe.get_meta("Material Request").has_field("custom_request_type") else []),
 		order_by="transaction_date desc, name desc")
 	for r in rows:
 		r["block_code"] = str(r.custom_sf_block or "").split(" - Block ").pop()
