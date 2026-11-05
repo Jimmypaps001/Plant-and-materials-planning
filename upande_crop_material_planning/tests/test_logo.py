@@ -58,3 +58,10 @@ class TestLogo(unittest.TestCase):
                 for name, body in re.findall(r"@keyframes ([\w-]+) \{(.*?)\n    \}", svg, re.S):
                     pcts = [float(x) for x in re.findall(r"([\d.]+)% \{", body)]
                     self.assertEqual(pcts, sorted(pcts), f"{key} {name}")
+
+
+class TestPlanningPageLogo(unittest.TestCase):
+    def test_planning_page_logo_file_exists(self):
+        html = (IMAGES.parent.parent / "www" / "summer-flowers-planning.html").read_text()
+        src = re.search(r'class="pl-logo" src="/assets/upande_crop_material_planning/images/([^"]+)"', html).group(1)
+        self.assertTrue((IMAGES / src).is_file(), src)

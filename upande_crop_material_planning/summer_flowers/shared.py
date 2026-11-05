@@ -91,6 +91,3 @@ class _Lazy:
 def module(name):
 	return _Lazy(load_module, name)
 
-
-def doctype_module(name):
-	return _Lazy(load_doctype, name)

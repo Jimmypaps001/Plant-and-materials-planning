@@ -55,7 +55,13 @@ REPORTS = ("Summer Flower Plan Space",)
 
 
 def execute():
-	if not frappe.db.exists("Module Def", MODULE):
+	take_over()
+
+
+def take_over(require_module_def=True):
+	"""Idempotent. `require_module_def=False` is for before_install, which runs before the app's Module Def exists:
+	`bench install-app` marks patches.txt entries done without running them, so the install hook has to do this."""
+	if require_module_def and not frappe.db.exists("Module Def", MODULE):
 		return
 	for name in DOCTYPES:
 		row = frappe.db.get_value("DocType", name, ["module", "custom"], as_dict=True)
